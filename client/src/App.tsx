@@ -14,6 +14,7 @@ import CodeAssistantPage from "./pages/CodeAssistantPage";
 
 // UI components
 import Sidebar from "./components/Sidebar";
+import { Toaster } from "./components/ui/toaster";
 
 // About page component
 const AboutPage = () => (
@@ -171,6 +172,9 @@ function App() {
           <Route component={NotFound} />
         </Switch>
       </main>
+      
+      {/* Toast notifications */}
+      <Toaster />
     </div>
   );
 }
