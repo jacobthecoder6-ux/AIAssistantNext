@@ -3,6 +3,12 @@ import Anthropic from '@anthropic-ai/sdk';
 // the newest Anthropic model is "claude-3-7-sonnet-20250219" which was released February 24, 2025
 const DEFAULT_MODEL = 'claude-3-7-sonnet-20250219';
 
+// Define the type for chat messages
+type ChatMessage = {
+  role: 'user' | 'assistant';
+  content: string;
+};
+
 /**
  * Creates an Anthropic client with the provided API key
  */
@@ -39,19 +45,24 @@ export const generateAnthropicResponse = async (
       : `You are Claude, a helpful, multilingual AI assistant. Identify the language the user is communicating in and respond in the same language. Be helpful, concise, and friendly.`;
     
     // Format messages for Anthropic API
-    const formattedMessages = [
-      ...chatHistory,
-      { role: "user", content: message }
-    ];
+    const formattedMessages: ChatMessage[] = chatHistory.map(msg => ({
+      role: msg.role === 'user' ? 'user' : 'assistant',
+      content: msg.content
+    }));
     
     const response = await anthropic.messages.create({
       model,
       system: systemMessage,
-      messages: formattedMessages,
+      messages: [...formattedMessages, { role: 'user', content: message }],
       max_tokens: 1024,
     });
     
-    return response.content[0].text;
+    const content = response.content[0];
+    if ('text' in content) {
+      return content.text;
+    } else {
+      return "Error: Unexpected response format from Claude.";
+    }
   } catch (error: any) {
     console.error("Error generating Anthropic response:", error);
     
@@ -85,7 +96,11 @@ export const detectLanguageWithAnthropic = async (text: string, apiKey: string):
       max_tokens: 10,
     });
     
-    const languageCode = response.content[0].text?.trim().toLowerCase();
+    let languageCode = '';
+    const content = response.content[0];
+    if ('text' in content) {
+      languageCode = content.text.trim().toLowerCase();
+    }
     
     // Validate that it's a 2-letter code
     if (languageCode && /^[a-z]{2}$/.test(languageCode)) {

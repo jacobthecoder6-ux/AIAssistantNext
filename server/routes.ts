@@ -2,23 +2,29 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { generateAIResponse, detectLanguageWithAI } from "./lib/openai";
+import { generateAnthropicResponse, detectLanguageWithAnthropic } from "./lib/anthropic";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Chat endpoint
   app.post('/api/chat', async (req, res) => {
     try {
-      const { message, model, language, apiKey } = req.body;
+      const { message, model, language, apiKey, provider = 'openai', anthropicKey } = req.body;
       
       if (!message) {
         return res.status(400).json({ error: 'Message is required' });
       }
       
-      if (!apiKey) {
-        return res.status(400).json({ error: 'API key is required' });
+      // Check for correct API key based on provider
+      if (provider === 'openai' && !apiKey) {
+        return res.status(400).json({ error: 'OpenAI API key is required' });
+      }
+      
+      if (provider === 'anthropic' && !anthropicKey) {
+        return res.status(400).json({ error: 'Anthropic API key is required' });
       }
       
       // Get chat history from memory storage
-      let chatHistory = [];
+      let chatHistory: Array<{role: string, content: string}> = [];
       if (req.body.chatId) {
         const chat = await storage.getChatById(req.body.chatId);
         if (chat) {
@@ -29,12 +35,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Generate AI response
-      const response = await generateAIResponse(message, chatHistory, {
-        model,
-        language,
-        apiKey
-      });
+      // Generate response based on selected provider
+      let response = '';
+      if (provider === 'anthropic') {
+        const anthropicResponse = await generateAnthropicResponse(message, chatHistory, {
+          model,
+          language,
+          apiKey: anthropicKey
+        });
+        response = anthropicResponse || 'Error: Unable to generate response from Anthropic';
+      } else {
+        const openaiResponse = await generateAIResponse(message, chatHistory, {
+          model,
+          language,
+          apiKey
+        });
+        response = openaiResponse || 'Error: Unable to generate response from OpenAI';
+      }
       
       // Store the message and response if we have a chatId
       if (req.body.chatId) {
@@ -46,7 +63,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         await storage.addMessageToChat(req.body.chatId, {
           type: 'bot',
-          content: response,
+          content: response || 'Error: Unable to generate response',
           timestamp: new Date()
         });
       }
@@ -64,7 +81,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Detect language endpoint
   app.post('/api/detect-language', async (req, res) => {
     try {
-      const { text, apiKey } = req.body;
+      const { text, apiKey, provider = 'openai', anthropicKey } = req.body;
       
       if (!text) {
         return res.status(400).json({ error: 'Text is required' });
@@ -72,8 +89,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       let language = 'en'; // Default to English
       
-      // If API key is provided, use AI for detection
-      if (apiKey) {
+      // If API key is provided, use AI for detection based on provider
+      if (provider === 'anthropic' && anthropicKey) {
+        language = await detectLanguageWithAnthropic(text, anthropicKey);
+      } else if (provider === 'openai' && apiKey) {
         language = await detectLanguageWithAI(text, apiKey);
       } else {
         // Basic detection for common European languages
