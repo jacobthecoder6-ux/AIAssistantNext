@@ -3,6 +3,8 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { generateAIResponse, detectLanguageWithAI, generateImage, generateCodeAssistance, solveMathProblem } from "./lib/openai";
 import { generateAnthropicResponse, detectLanguageWithAnthropic } from "./lib/anthropic";
+import * as fs from 'fs';
+import * as path from 'path';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Chat endpoint
@@ -353,13 +355,136 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Specialized chatbot endpoints
+  
+  // Create specialized chatbot
+  app.post('/api/chatbots', async (req, res) => {
+    try {
+      const { 
+        type, 
+        name, 
+        description, 
+        systemPrompt, 
+        welcomeMessage, 
+        exampleQuestions = [] 
+      } = req.body;
+      
+      if (!name || !systemPrompt) {
+        return res.status(400).json({ error: 'Name and systemPrompt are required' });
+      }
+      
+      // Create the chatbot
+      const chatbot = await storage.createSpecializedChatbot({
+        type: type || 'custom',
+        name,
+        description: description || 'Custom Chatbot',
+        systemPrompt,
+        welcomeMessage: welcomeMessage || 'Hello! How can I help you today?',
+        exampleQuestions: Array.isArray(exampleQuestions) ? exampleQuestions : [],
+      });
+      
+      res.json({ 
+        id: chatbot.id,
+        name: chatbot.name
+      });
+    } catch (error) {
+      console.error('Error creating specialized chatbot:', error);
+      res.status(500).json({ error: 'Failed to create specialized chatbot' });
+    }
+  });
+  
+  // Get specialized chatbot
+  app.get('/api/chatbots/:id', async (req, res) => {
+    try {
+      const chatbot = await storage.getSpecializedChatbotById(req.params.id);
+      
+      if (!chatbot) {
+        return res.status(404).json({ error: 'Chatbot not found' });
+      }
+      
+      res.json({ chatbot });
+    } catch (error) {
+      console.error('Error fetching specialized chatbot:', error);
+      res.status(500).json({ error: 'Failed to fetch specialized chatbot' });
+    }
+  });
+  
+  // List all specialized chatbots
+  app.get('/api/chatbots', async (req, res) => {
+    try {
+      const chatbots = await storage.getAllSpecializedChatbots();
+      res.json({ chatbots });
+    } catch (error) {
+      console.error('Error fetching specialized chatbots:', error);
+      res.status(500).json({ error: 'Failed to fetch specialized chatbots' });
+    }
+  });
+  
+  // Send message to specialized chatbot
+  app.post('/api/chatbot-message', async (req, res) => {
+    try {
+      const { message, chatbotId, systemPrompt, chatHistory = [] } = req.body;
+      
+      if (!message) {
+        return res.status(400).json({ error: 'Message is required' });
+      }
+      
+      // Get the chatbot
+      const chatbot = await storage.getSpecializedChatbotById(chatbotId);
+      
+      if (!chatbot) {
+        return res.status(404).json({ error: 'Chatbot not found' });
+      }
+      
+      // Use environment API key
+      const apiKey = process.env.OPENAI_API_KEY;
+      
+      if (!apiKey) {
+        return res.status(500).json({ error: 'OpenAI API key not configured' });
+      }
+      
+      // Format chat history with system prompt
+      const formattedHistory = [
+        { role: 'system', content: chatbot.systemPrompt || systemPrompt },
+        ...chatHistory
+      ];
+      
+      // Generate response
+      const response = await generateAIResponse(message, formattedHistory, {
+        model: 'gpt-4o',
+        apiKey
+      });
+      
+      // Store the message and response
+      await storage.addSpecializedChatbotMessage(chatbotId, {
+        role: 'user',
+        content: message,
+        timestamp: new Date()
+      });
+      
+      await storage.addSpecializedChatbotMessage(chatbotId, {
+        role: 'assistant',
+        content: response,
+        timestamp: new Date()
+      });
+      
+      res.json({ response });
+    } catch (error) {
+      console.error('Error sending message to specialized chatbot:', error);
+      res.status(500).json({ 
+        error: 'Failed to generate response',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Export project code endpoint
   app.get('/api/export-code', async (req, res) => {
     try {
       // Create a structured representation of the project files and their contents
       const projectStructure = {
         name: "AI Chatbot Project",
-        description: "A multilingual AI chatbot with code assistance, image generation, and math solving capabilities",
+        description: "A multilingual AI chatbot with code assistance, image generation, math solving, and specialized chatbot creation capabilities",
         version: "1.0.0",
         license: "MIT",
         author: "Created by Replit",
@@ -369,15 +494,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           "Image generation with DALL-E",
           "Math problem solving with step-by-step solutions",
           "Chat history storage",
-          "Theme customization"
+          "Theme customization",
+          "Specialized chatbot creation (therapist, financial advisor, etc.)"
         ],
         components: {
           frontend: {
             pages: [
-              "HomePage", "ChatPage", "CodeAssistantPage", "ImageGeneratorPage", "MathSolverPage"
+              "HomePage", "ChatPage", "CodeAssistantPage", "ImageGeneratorPage", 
+              "MathSolverPage", "ChatbotBuilderPage", "SpecializedChatbotPage"
             ],
             components: [
-              "ChatContainer", "ChatHeader", "ChatArea", "InputArea", "Sidebar", "SettingsPanel"
+              "ChatContainer", "ChatHeader", "ChatArea", "InputArea", 
+              "Sidebar", "SettingsPanel", "ExportCodeButton"
             ],
             libs: [
               "openai.ts", "anthropic.ts", "queryClient.ts", "languageUtils.ts"
@@ -387,14 +515,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             routes: [
               "/api/chat", "/api/detect-language", "/api/chats", 
               "/api/generate-image", "/api/code-assistance", "/api/solve-math",
-              "/api/code-snippets", "/api/export-code"
+              "/api/code-snippets", "/api/export-code", "/api/chatbots", "/api/chatbot-message"
             ],
             services: [
               "openai.ts", "anthropic.ts", "storage.ts", "db.ts"
             ],
             database: {
               models: [
-                "users", "chats", "messages", "code_snippets", "prompt_templates"
+                "users", "chats", "messages", "code_snippets", 
+                "prompt_templates", "specialized_chatbots", "specialized_chatbot_messages"
               ]
             }
           }
@@ -422,7 +551,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             chat: "General conversation with context-aware responses",
             codeAssistance: "Generate, debug, and optimize code across multiple languages",
             imageGeneration: "Create detailed images from text descriptions",
-            mathSolving: "Solve complex mathematical problems with step-by-step solutions"
+            mathSolving: "Solve complex mathematical problems with step-by-step solutions",
+            specializedChatbots: "Create and use specialized chatbots for therapy, financial advice, etc."
           }
         }
       };

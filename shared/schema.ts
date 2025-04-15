@@ -18,7 +18,8 @@ export const users = pgTable("users", {
 });
 
 export const usersRelations = relations(users, ({ many }) => ({
-  chats: many(chats)
+  chats: many(chats),
+  specializedChatbots: many(specializedChatbots)
 }));
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -154,3 +155,66 @@ export type InsertCodeSnippet = z.infer<typeof insertCodeSnippetSchema>;
 export type CodeSnippet = typeof codeSnippets.$inferSelect;
 export type InsertPromptTemplate = z.infer<typeof insertPromptTemplateSchema>;
 export type PromptTemplate = typeof promptTemplates.$inferSelect;
+
+// Specialized chatbots for different purposes (therapist, financial advisor, etc.)
+export const specializedChatbots = pgTable("specialized_chatbots", {
+  id: text("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  type: varchar("type", { length: 50 }).notNull().default("custom"), // therapist, financial-advisor, etc.
+  name: text("name").notNull(),
+  description: text("description"),
+  systemPrompt: text("system_prompt").notNull(),
+  welcomeMessage: text("welcome_message"),
+  exampleQuestions: jsonb("example_questions").default([]),
+  isPublic: boolean("is_public").default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at"),
+});
+
+export const specializedChatbotsRelations = relations(specializedChatbots, ({ one, many }) => ({
+  user: one(users, {
+    fields: [specializedChatbots.userId],
+    references: [users.id]
+  }),
+  messages: many(specializedChatbotMessages)
+}));
+
+export const insertSpecializedChatbotSchema = createInsertSchema(specializedChatbots).pick({
+  userId: true,
+  type: true,
+  name: true,
+  description: true,
+  systemPrompt: true,
+  welcomeMessage: true,
+  exampleQuestions: true,
+  isPublic: true,
+});
+
+// Specialized chatbot messages
+export const specializedChatbotMessages = pgTable("specialized_chatbot_messages", {
+  id: text("id").primaryKey(),
+  chatbotId: text("chatbot_id").notNull().references(() => specializedChatbots.id, { onDelete: "cascade" }),
+  role: varchar("role", { length: 10 }).notNull(), // 'user', 'assistant', or 'system'
+  content: text("content").notNull(),
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+  metadata: jsonb("metadata"),
+});
+
+export const specializedChatbotMessagesRelations = relations(specializedChatbotMessages, ({ one }) => ({
+  chatbot: one(specializedChatbots, {
+    fields: [specializedChatbotMessages.chatbotId],
+    references: [specializedChatbots.id]
+  }),
+}));
+
+export const insertSpecializedChatbotMessageSchema = createInsertSchema(specializedChatbotMessages).pick({
+  chatbotId: true,
+  role: true,
+  content: true,
+  metadata: true,
+});
+
+export type InsertSpecializedChatbot = z.infer<typeof insertSpecializedChatbotSchema>;
+export type SpecializedChatbot = typeof specializedChatbots.$inferSelect;
+export type InsertSpecializedChatbotMessage = z.infer<typeof insertSpecializedChatbotMessageSchema>;
+export type SpecializedChatbotMessage = typeof specializedChatbotMessages.$inferSelect;
