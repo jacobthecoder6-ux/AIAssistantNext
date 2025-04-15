@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Ultimate Multilingual AI Chatbot</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            display: flex;
+            /* Gojo Background */
+            background-image: url('https://i.pinimg.com/originals/4a/a8/1c/4aa81c185202a9458435513455714161.jpg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #chatbot-container {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            width: 90%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            margin: 20px auto;
+            flex-grow: 1;
+        }
+
+        #title-page {
+            background-color: #007bff;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+        }
+
+        #title-page h1 {
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        #title-page p {
+            font-size: 1.1em;
+        }
+
+        #title-page button {
+            background-color: #fff;
+            color: #007bff;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1.1em;
+            margin-top: 15px;
+            transition: background-color 0.3s ease;
+        }
+
+        #title-page button:hover {
+            background-color: #f0f0f0;
+        }
+
+        #chat-area {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: none;
+            flex-direction: column;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 12px 20px;
+            border-radius: 25px;
+            clear: both;
+            max-width: 80%;
+            animation: fadeIn 0.5s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user-message {
+            background-color: #cce5ff;
+            align-self: flex-end;
+            color: #004085;
+        }
+
+        .bot-message {
+            background-color: #f0f0f0;
+            align-self: flex-start;
+            color: #0c3001;
+        }
+
+        #input-area {
+            padding: 15px;
+            display: none;
+            flex-direction: row;
+            align-items: center;
+            border-top: 1px solid #eee;
+        }
+
+        #user-input {
+            flex-grow: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            margin-right: 15px;
+            font-size: 1.1em;
+            transition: border-color 0.3s ease;
+        }
+
+        #user-input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+
+        #send-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background-color 0.3s ease;
+        }
+
+        #send-button:hover {
+            background-color: #0056b3;
+        }
+
+        #options-sidebar {
+            background-color: #f8f9fa;
+            width: 250px;
+            padding: 20px;
+            border-left: 1px solid #eee;
+            display: none;
+            flex-direction: column;
+            animation: slideIn 0.3s ease-in-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(250px); }
+            to { transform: translateX(0); }
+        }
+
+        #options-sidebar h2 {
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            color: #343a40;
+        }
+
+        .option-group {
+            margin-bottom: 20px;
+        }
+
+        .option-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #495057;
+            font-size: 1em;
+        }
+
+        .option-group select, .option-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1.1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .option-group select:focus, .option-group input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+
+        #menu-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1.1em;
+            margin: 10px;
+            align-self: flex-start;
+            display: none;
+            transition: background-color 0.3s ease;
+        }
+
+        #menu-button:hover {
+            background-color: #0056b3;
+        }
+
+        #new-chat-button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1.1em;
+            margin: 15px auto;
+            transition: background-color 0.3s ease;
+            display: none;
+        }
+
+        #new-chat-button:hover {
+            background-color: #218838;
+        }
+
+        #top-menu {
+            background-color: #343a40;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #top-menu button {
+            background-color: transparent;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background-color 0.3s ease;
+        }
+
+        #top-menu button:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            #options-sidebar {
+                width: 100%;
+                border-left: none;
+                border-top: 1px solid #eee;
+                animation: slideInMobile 0.3s ease-in-out;
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100%;
+                overflow-y: auto;
+                z-index: 10;
+                background-color: #f8f9fa;
+            }
+            @keyframes slideInMobile {
+                from {transform: translateY(-100%);}
+                to {transform: translateY(0);}
+            }
+
+            #menu-button {
+                display: block;
+            }
+            #top-menu{
+                display: flex;
+            }
+            #chatbot-container{
+                border-radius: 0;
+            }
+            #title-page{
+                border-top-left-radius: 0;
+                border-top-right-radius: 0;
+            }
+        }
+        .hidden-code {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="chatbot-container">
+        <div id="top-menu">
+            <button id="menu-button">Menu</button>
+            <button id="new-chat-button" onclick="startNewChat()">New Chat</button>
+        </div>
+        <div id="title-page">
+            <h1>The Ultimate Multilingual AI Chatbot</h1>
+            <p>Ask me anything in any language!</p>
+            <button onclick="startChat()">Start Chatting</button>
+        </div>
+        <div id="chat-area">
+            <div id="chat"></div>
+            <div id="input-area">
+                <input type="text" id="user-input" placeholder="Type your message here">
+                <button id="send-button" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+        <div id="options-sidebar">
+            <h2>Settings</h2>
+            <div class="option-group">
+                <label for="theme-select">Theme:</label>
+                <select id="theme-select">
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                    <option value="blue">Blue</option>
+                </select>
+            </div>
+            <div class="option-group">
+                <label for="font-size-input">Font Size:</label>
+                <input type="number" id="font-size-input" value="16" min="12" max="24">
+            </div>
+            <div class="option-group">
+                <label for="language-select">Language:</label>
+                <select id="language-select">
+                    <option value="en">English</option>
+                    <option value="es">Español</option>
+                    <option value="fr">Français</option>
+                    <option value="zh">中文</option>
+                </select>
+            </div>
+            <button id="close-options-button" style="margin-top: 20px; display: none;">Close</button>
+        </div>
+    </div>
+
+    <script>
+        const titlePage = document.getElementById('title-page');
+        const chatArea = document.getElementById('chat-area');
+        const chatDiv = document.getElementById('chat');
+        const userInput = document.getElementById('user-input');
+        const inputArea = document.getElementById('input-area');
+        const optionsSidebar = document.getElementById('options-sidebar');
+        const menuButton = document.getElementById('menu-button');
+        const closeOptionsButton = document.getElementById('close-options-button');
+        const newChatButton = document.getElementById('new-chat-button');
+        const topMenu = document.getElementById('top-menu');
+
+        let isSidebarOpen = false;
+
+        function startChat() {
+            titlePage.style.display = 'none';
+            chatArea.style.display = 'flex';
+            inputArea.style.display = 'flex';
+            newChatButton.style.display = 'block';
+            if (window.innerWidth <= 768) {
+                menuButton.style.display = 'block';
+                topMenu.style.display = 'flex';
+            }
+            setTimeout(() => {
+                displayBotMessage("Hey there! I'm super excited to chat with you. What can I help you with today?");
+            }, 500);
+        }
+
+        function sendMessage() {
+            const userMessageText = userInput.value.trim();
+            if (userMessageText !== '') {
+                displayUserMessage(userMessageText);
+                userInput.value = '';
+                setTimeout(() => {
+                    const aiResponse = getAIResponse(userMessageText);
+                    displayBotMessage(aiResponse);
+                }, 1000);
+            }
+        }
+
+        function displayUserMessage(message) {
+            chatDiv.innerHTML += `<div class="message user-message">${message}</div>`;
+            scrollToBottom();
+        }
+
+        function displayBotMessage(message) {
+            chatDiv.innerHTML += `<div class="message bot-message">${message}</div>`;
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        // Updated AI Response Function (Like ChatGPT)
+        function getAIResponse(userMessage) {
+            userMessage = userMessage.toLowerCase();
+
+            // More General Responses
+            if (userMessage.includes('hello') || userMessage.includes('hi') || userMessage.includes('hey')) {
+                return "Hello! How can I assist you today?";
+            } else if (userMessage.includes('how are you')) {
+                return "I'm doing well, thank you! How are you feeling?";
+            } else if (userMessage.includes('what is your name')) {
+                return "I'm a multilingual AI chatbot, here to help!";
+            }
+
+            // Code-Related Requests
+            else if (userMessage.includes('code') || userMessage.includes('program') || userMessage.includes('script')) {
+                return generateCode(userMessage);
+            }
+
+            // Translation Requests
+            else if (userMessage.includes('translate')) {
+                return "I can help with translations! Please provide the text you'd like translated and the languages.";
+            }
+
+            // Explanation Requests
+            else if (userMessage.includes('explain') || userMessage.includes('what is') || userMessage.includes('how does')) {
+                return "I can definitely help with that! Could you please provide more details about what you'd like me to explain?";
+            }
+
+            // Creative Writing Requests
+            else if (userMessage.includes('write a story') || userMessage.includes('write a poem')) {
+                return "I can try my hand at some creative writing! What kind of story or poem would you like?";
+            }
+
+            // General Knowledge
+            else if (userMessage.includes('what is the capital of') || userMessage.includes('what is the population of')) {
+                return "I can provide you with that information. Please specify the country or region you're interested in.";
+            }
+
+            // Apologize for sensitive topics
+            else if (userMessage.includes('sex') || userMessage.includes('violence') || userMessage.includes('hate')) {
+                return "I'm sorry, but I can't provide information on that topic. I am not designed to discuss sensitive content.";
+            }
+
+            // Polite and Encouraging Default
+            else {
+                return "That's an interesting topic! I'm still under development, but I'll do my best to help. Could you tell me more about what you're looking for?";
+            }
+        }
+
+        // Updated Function for Code Generation (Like Me)
+        function generateCode(userMessage) {
+            const languages = ["Python", "Java", "C++", "JavaScript", "PHP", "Ruby", "Go", "Swift", "Kotlin", "Rust", "Julia", "C#", "TypeScript", "R", "Dart", "Scala", "Perl", "Haskell", "Lua", "Shell", "PowerShell", "SQL", "HTML", "CSS", "Objective-C", "Assembly"];
+            const randomLanguage = languages[Math.floor(Math.random() * languages.length)];
+            // Improved prompt for the AI (if we were using a real API)
+            const prompt = `Generate code in ${randomLanguage} to: ${userMessage}`;
+
+            // Simulated code generation with comments and best practices
+            let generatedCode = `
+        // ${randomLanguage} Code Example: ${userMessage}
+
+        /**
+         * This function (simulated) demonstrates how to ${userMessage}
+         * in ${randomLanguage}.
+         * @param {string} input -  The input data (if applicable).
+         * @returns {mixed} The result of the operation (if applicable), or an error message.
+         */
+        function processData(input) {
+          // 1.  Initialize variables with clear names
+          let result = null;
+          let errorMessage = "";
+
+          // 2.  Input validation (simulated)
+          if (!input) {
+            errorMessage = "Error: Input is missing.";
+            console.error(errorMessage);
+            return { error: errorMessage }; //  Return an error object
+          }
+
+          // 3.  Main logic (simulated)
+          try {
+            //  Simulate a successful operation
+            if (typeof input === 'string') {
+              result = "Processed: " + input.toUpperCase();
+            } else {
+              result = "Processed: " + String(input * 2); //  Example
+            }
+            console.log("Data processed successfully. Result:", result);
+            return { success: result };
+
+          } catch (error) {
+            // 4.  Error handling (simulated)
+            errorMessage = "An unexpected error occurred: " + error.message;
+            console.error(errorMessage);
+            return { error: errorMessage }; // Return an error object
+          }
+        }
+
+        // 5.  Example usage (simulated)
+        let sampleInput = "example data";
+        let processedResult = processData(sampleInput);
+
+        if (processedResult.error) {
+          console.log("Error:", processedResult.error);
+        } else {
+          console.log("Output:", processedResult.success);
+        }
+
+        // End of simulated code
+        `;
+
+            return `Okay, here's some example code in ${randomLanguage} based on your request: "${userMessage}"
+
+        <pre style="background-color:#f0f0f0; padding:15px; border-radius:5px; overflow-x:auto;">${generatedCode}</pre>
+
+        `;
+        }
+
+        // Event Listeners for Options Sidebar
+        menuButton.addEventListener('click', () => {
+            optionsSidebar.style.display = isSidebarOpen ? 'none' : 'flex';
+            isSidebarOpen = !isSidebarOpen;
+            if (window.innerWidth <= 768) {
+                closeOptionsButton.style.display = isSidebarOpen? 'block' : 'none';
+            }
+
+        });
+
+        closeOptionsButton.addEventListener('click', () => {
+            optionsSidebar.style.display = 'none';
+            isSidebarOpen = false;
+            closeOptionsButton.style.display = 'none';
+        });
+
+        // Theme Selection
+        const themeSelect = document.getElementById('theme-select');
+        themeSelect.addEventListener('change', () => {
+            const selectedTheme = themeSelect.value;
+            document.body.className = selectedTheme + '-theme';
+            if (selectedTheme === 'dark') {
+                document.body.style.backgroundColor = '#333';
+                document.body.style.color = '#eee';
+            } else if (selectedTheme === 'blue') {
+                document.body.style.backgroundColor = '#e0f7fa';
+                document.body.style.color = '#1a5255';
+            }
+             else {
+                document.body.style.backgroundColor = '#FFFFFF';
+                document.body.style.color = '#000000';
+            }
+        });
+
+        // Font Size Adjustment
+        const fontSizeInput = document.getElementById('font-size-input');
+        fontSizeInput.addEventListener('change', () => {
+            const fontSize = fontSizeInput.value + 'px';
+            chatDiv.style.fontSize = fontSize;
+            userInput.style.fontSize = fontSize;
+        });
+
+        // Language Selection (Simulated)
+        const languageSelect = document.getElementById('language-select');
+        languageSelect.addEventListener('change', () => {
+            const selectedLanguage = languageSelect.value;
+            // In a real application, you would use a translation API here
+            // to translate the bot's responses.  For this example, we'll
+            // just log the selected language to the console.
+            console.log('Language selected:', selectedLanguage);
+            if (selectedLanguage === 'es') {
+                alert('Funcionalidad de traducción al español en desarrollo.');
+            } else if (selectedLanguage === 'fr'){
+                alert('Fonctionnalité de traduction française en développement.');
+            } else if (selectedLanguage === 'zh'){
+                alert('中文翻译功能正在开发中。');
+            }
+        });
+
+        function startNewChat() {
+            chatDiv.innerHTML = '';
+            userInput.value = '';
+            setTimeout(() => {
+                displayBotMessage("Hi there! I'm ready for a new chat. How can I assist you today?");
+            }, 500);
+        }
+    </script>
+
+    <div class="hidden-code">
+      <?php
+        //  PHP's Role in a Complex AI System
+        //  --------------------------------
+        //  PHP often acts as the "backend" for web applications.  In the context of a chatbot:
+        //
+        //  1.  Receiving User Input:  When a user types a message in the chat (which is handled by JavaScript in the browser),
+        //      that message is sent to a PHP script on the server.
+        //
+        //  2.  Communicating with the AI: PHP then takes that message and sends it to a specialized AI service
+        //      (like Google's Gemini, OpenAI's GPT, or another) using an API (Application Programming Interface).
+        //
+        //  3.  Getting the Response:  The AI service processes the message and sends back a response to the PHP script.
+        //
+        //  4.  Sending the Response to the User:  The PHP script then sends that response back to the user's browser,
+        //      where JavaScript displays it in the chat window.
+        //
+        //  In essence, PHP helps connect the user-facing part of the chatbot (the webpage) with the "brain" of the AI.
+        //
+        //  Example (Conceptual):
+        //  $user_message = $_POST['message'];  // Get the message sent from JavaScript
+        //  $ai_response = get_ai_response($user_message); // Function to call the AI service (implementation would be complex)
+        //  echo $ai_response; // Send the response back to JavaScript
+
+        echo "<script>console.log('PHP is ready to connect to a real AI!')</script>";
+
+        // Python's Role in AI
+        // ------------------
+        // Python is a dominant language in AI, particularly for:
+        // -   Machine Learning:  Libraries like TensorFlow, PyTorch, and scikit-learn provide tools for training AI models.
+        // -   Natural Language Processing (NLP):  Libraries like NLTK and spaCy help computers understand and process human language.
+        echo "<script>console.log('Thinking about Python for the main AI brain (Machine Learning, NLP)...')</script>";
+
+        // Java's Role in AI
+        // ----------------
+        // Java is often used for building large-scale, enterprise-level applications.  In AI, it can be used for:
+        // -   Building robust and scalable systems that can handle many users and complex tasks.
+        // -   Developing platforms for deploying and managing AI models.
+        echo "<script>console.log('Considering Java for handling many users at once and building scalable AI systems...')</script>";
+
+        // C++'s Role in AI
+        // ----------------
+        // C++ is known for its performance and efficiency.  In AI, it's valuable for:
+        // -   Developing high-performance algorith
