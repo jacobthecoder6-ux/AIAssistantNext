@@ -10,21 +10,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Chat endpoint
   app.post('/api/chat', async (req, res) => {
     try {
-      const { message, model, language, apiKey, provider = 'openai', anthropicKey } = req.body;
-      
+      const { message, model, language, provider = 'openai' } = req.body;
+
       if (!message) {
         return res.status(400).json({ error: 'Message is required' });
       }
-      
-      // Check for correct API key based on provider
-      if (provider === 'openai' && !apiKey) {
-        return res.status(400).json({ error: 'OpenAI API key is required' });
+
+      if (!req.body.password) {
+        return res.status(400).json({ error: 'Password is required to use this feature' });
       }
-      
-      if (provider === 'anthropic' && !anthropicKey) {
-        return res.status(400).json({ error: 'Anthropic API key is required' });
+
+      // Validate password (you should implement proper password validation)
+      if (req.body.password !== process.env.APP_PASSWORD) {
+        return res.status(401).json({ error: 'Invalid password' });
       }
-      
+
       // Get chat history from memory storage
       let chatHistory: Array<{role: string, content: string}> = [];
       if (req.body.chatId) {
@@ -36,25 +36,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }));
         }
       }
-      
+
       // Generate response based on selected provider
       let response = '';
       if (provider === 'anthropic') {
         const anthropicResponse = await generateAnthropicResponse(message, chatHistory, {
           model,
           language,
-          apiKey: anthropicKey
         });
         response = anthropicResponse || 'Error: Unable to generate response from Anthropic';
       } else {
         const openaiResponse = await generateAIResponse(message, chatHistory, {
           model,
           language,
-          apiKey
         });
         response = openaiResponse || 'Error: Unable to generate response from OpenAI';
       }
-      
+
       // Store the message and response if we have a chatId
       if (req.body.chatId) {
         await storage.addMessageToChat(req.body.chatId, {
@@ -62,14 +60,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           content: message,
           timestamp: new Date()
         });
-        
+
         await storage.addMessageToChat(req.body.chatId, {
           type: 'bot',
           content: response || 'Error: Unable to generate response',
           timestamp: new Date()
         });
       }
-      
+
       res.json({ response });
     } catch (error) {
       console.error('Error in chat endpoint:', error);
@@ -79,28 +77,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
+
   // Detect language endpoint
   app.post('/api/detect-language', async (req, res) => {
     try {
-      const { text, apiKey, provider = 'openai', anthropicKey } = req.body;
-      
+      const { text, provider = 'openai' } = req.body;
+
       if (!text) {
         return res.status(400).json({ error: 'Text is required' });
       }
-      
+
+      if (!req.body.password) {
+        return res.status(400).json({ error: 'Password is required to use this feature' });
+      }
+
+      // Validate password (you should implement proper password validation)
+      if (req.body.password !== process.env.APP_PASSWORD) {
+        return res.status(401).json({ error: 'Invalid password' });
+      }
+
       let language = 'en'; // Default to English
-      
+
       // If API key is provided, use AI for detection based on provider
-      if (provider === 'anthropic' && anthropicKey) {
-        language = await detectLanguageWithAnthropic(text, anthropicKey);
-      } else if (provider === 'openai' && apiKey) {
-        language = await detectLanguageWithAI(text, apiKey);
+      if (provider === 'anthropic') {
+        language = await detectLanguageWithAnthropic(text);
+      } else if (provider === 'openai') {
+        language = await detectLanguageWithAI(text);
       } else {
         // Basic detection for common European languages
         // This is a fallback if no API key is provided
         const lowerText = text.toLowerCase();
-        
+
         if (/[àáâäæãåā]/.test(lowerText)) language = 'fr';
         else if (/[èéêëēėę]/.test(lowerText)) language = 'fr';
         else if (/[ìíîïī]/.test(lowerText)) language = 'es';
@@ -112,7 +119,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         else if (/\b(el|la|los|las|es|en|por|que)\b/.test(lowerText)) language = 'es';
         else if (/\b(le|la|les|un|une|est|dans|pour)\b/.test(lowerText)) language = 'fr';
       }
-      
+
       res.json({ language });
     } catch (error) {
       console.error('Error in detect-language endpoint:', error);
@@ -122,66 +129,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
+
   // Create new chat endpoint
   app.post('/api/chats', async (req, res) => {
     try {
       const { title = 'New Conversation' } = req.body;
-      
+
+      if (!req.body.password) {
+        return res.status(400).json({ error: 'Password is required to use this feature' });
+      }
+
+      // Validate password (you should implement proper password validation)
+      if (req.body.password !== process.env.APP_PASSWORD) {
+        return res.status(401).json({ error: 'Invalid password' });
+      }
+
       const chatId = await storage.createChat(title);
-      
+
       res.json({ id: chatId });
     } catch (error) {
       console.error('Error creating chat:', error);
       res.status(500).json({ error: 'Failed to create chat' });
     }
   });
-  
+
   // Get chat history endpoint
   app.get('/api/chats', async (req, res) => {
     try {
+      if (!req.body.password) {
+        return res.status(400).json({ error: 'Password is required to use this feature' });
+      }
+
+      // Validate password (you should implement proper password validation)
+      if (req.body.password !== process.env.APP_PASSWORD) {
+        return res.status(401).json({ error: 'Invalid password' });
+      }
       const chats = await storage.getAllChats();
-      
+
       res.json({ chats });
     } catch (error) {
       console.error('Error fetching chats:', error);
       res.status(500).json({ error: 'Failed to fetch chat history' });
     }
   });
-  
+
   // Get chat by ID endpoint
   app.get('/api/chats/:id', async (req, res) => {
     try {
+      if (!req.body.password) {
+        return res.status(400).json({ error: 'Password is required to use this feature' });
+      }
+
+      // Validate password (you should implement proper password validation)
+      if (req.body.password !== process.env.APP_PASSWORD) {
+        return res.status(401).json({ error: 'Invalid password' });
+      }
       const chat = await storage.getChatById(req.params.id);
-      
+
       if (!chat) {
         return res.status(404).json({ error: 'Chat not found' });
       }
-      
+
       res.json({ chat });
     } catch (error) {
       console.error('Error fetching chat:', error);
       res.status(500).json({ error: 'Failed to fetch chat' });
     }
   });
-  
+
   // Delete chat endpoint
   app.delete('/api/chats/:id', async (req, res) => {
     try {
+      if (!req.body.password) {
+        return res.status(400).json({ error: 'Password is required to use this feature' });
+      }
+
+      // Validate password (you should implement proper password validation)
+      if (req.body.password !== process.env.APP_PASSWORD) {
+        return res.status(401).json({ error: 'Invalid password' });
+      }
       await storage.deleteChat(req.params.id);
-      
+
       res.json({ success: true });
     } catch (error) {
       console.error('Error deleting chat:', error);
       res.status(500).json({ error: 'Failed to delete chat' });
     }
   });
-  
+
   // Clear all chats endpoint
   app.delete('/api/chats', async (req, res) => {
     try {
+      if (!req.body.password) {
+        return res.status(400).json({ error: 'Password is required to use this feature' });
+      }
+
+      // Validate password (you should implement proper password validation)
+      if (req.body.password !== process.env.APP_PASSWORD) {
+        return res.status(401).json({ error: 'Invalid password' });
+      }
       await storage.clearAllChats();
-      
+
       res.json({ success: true });
     } catch (error) {
       console.error('Error clearing chats:', error);
@@ -192,18 +240,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Image generation endpoint
   app.post('/api/generate-image', async (req, res) => {
     try {
-      const { prompt, apiKey, size = '1024x1024' } = req.body;
-      
+      const { prompt, size = '1024x1024 } = req.body;
+
       if (!prompt) {
         return res.status(400).json({ error: 'Prompt is required' });
       }
-      
-      if (!apiKey) {
-        return res.status(400).json({ error: 'OpenAI API key is required' });
+
+      if (!req.body.password) {
+        return res.status(400).json({ error: 'Password is required to use this feature' });
       }
-      
-      const imageUrl = await generateImage(prompt, apiKey, size);
-      
+
+      // Validate password (you should implement proper password validation)
+      if (req.body.password !== process.env.APP_PASSWORD) {
+        return res.status(401).json({ error: 'Invalid password' });
+      }
+
+      const imageUrl = await generateImage(prompt, process.env.OPENAI_API_KEY || '', size);
+
       res.json({ imageUrl });
     } catch (error) {
       console.error('Error generating image:', error);
@@ -213,22 +266,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
+
   // Code assistance endpoint
   app.post('/api/code-assistance', async (req, res) => {
     try {
-      const { code, language, task, apiKey } = req.body;
-      
+      const { code, language, task } = req.body;
+
       if (!code) {
         return res.status(400).json({ error: 'Code is required' });
       }
-      
-      if (!apiKey) {
-        return res.status(400).json({ error: 'OpenAI API key is required' });
+
+      if (!req.body.password) {
+        return res.status(400).json({ error: 'Password is required to use this feature' });
       }
-      
-      const result = await generateCodeAssistance(code, language, task, apiKey);
-      
+
+      // Validate password (you should implement proper password validation)
+      if (req.body.password !== process.env.APP_PASSWORD) {
+        return res.status(401).json({ error: 'Invalid password' });
+      }
+
+      const result = await generateCodeAssistance(code, language, task, process.env.OPENAI_API_KEY || '');
+
       if (req.body.chatId) {
         // Record the interaction in chat history
         await storage.addMessageToChat(req.body.chatId, {
@@ -237,14 +295,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           timestamp: new Date(),
           codeBlocks: { language, code }
         });
-        
+
         await storage.addMessageToChat(req.body.chatId, {
           type: 'bot',
           content: result,
           timestamp: new Date()
         });
       }
-      
+
       // Store the code snippet for future reference
       if (req.body.userId) {
         await storage.createCodeSnippet?.({
@@ -256,7 +314,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           tags: ['generated'],
         });
       }
-      
+
       res.json({ result });
     } catch (error) {
       console.error('Error with code assistance:', error);
@@ -266,22 +324,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
+
   // Math solver endpoint
   app.post('/api/solve-math', async (req, res) => {
     try {
-      const { problem, apiKey, showSteps = true } = req.body;
-      
+      const { problem, showSteps = true } = req.body;
+
       if (!problem) {
         return res.status(400).json({ error: 'Math problem is required' });
       }
-      
-      if (!apiKey) {
-        return res.status(400).json({ error: 'OpenAI API key is required' });
+
+      if (!req.body.password) {
+        return res.status(400).json({ error: 'Password is required to use this feature' });
       }
-      
-      const solution = await solveMathProblem(problem, apiKey, showSteps);
-      
+
+      // Validate password (you should implement proper password validation)
+      if (req.body.password !== process.env.APP_PASSWORD) {
+        return res.status(401).json({ error: 'Invalid password' });
+      }
+
+      const solution = await solveMathProblem(problem, process.env.OPENAI_API_KEY || '', showSteps);
+
       if (req.body.chatId) {
         // Record the interaction in chat history
         await storage.addMessageToChat(req.body.chatId, {
@@ -289,14 +352,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           content: `Math problem: ${problem}`,
           timestamp: new Date()
         });
-        
+
         await storage.addMessageToChat(req.body.chatId, {
           type: 'bot',
           content: solution,
           timestamp: new Date()
         });
       }
-      
+
       res.json({ solution });
     } catch (error) {
       console.error('Error solving math problem:', error);
@@ -306,16 +369,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
+
   // Code snippet storage and retrieval endpoints
   app.post('/api/code-snippets', async (req, res) => {
     try {
       const { userId, title, description, language, code, tags } = req.body;
-      
+
       if (!userId || !code || !language) {
         return res.status(400).json({ error: 'UserId, code, and language are required' });
       }
-      
+
+      if (!req.body.password) {
+        return res.status(400).json({ error: 'Password is required to use this feature' });
+      }
+
+      // Validate password (you should implement proper password validation)
+      if (req.body.password !== process.env.APP_PASSWORD) {
+        return res.status(401).json({ error: 'Invalid password' });
+      }
+
       const snippet = await storage.createCodeSnippet?.({
         userId,
         title: title || 'Untitled Snippet',
@@ -324,30 +396,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         code,
         tags: tags || [],
       });
-      
+
       res.json({ snippet });
     } catch (error) {
       console.error('Error saving code snippet:', error);
       res.status(500).json({ error: 'Failed to save code snippet' });
     }
   });
-  
+
   app.get('/api/code-snippets', async (req, res) => {
     try {
       const userId = Number(req.query.userId);
       const language = req.query.language as string;
-      
+
       if (!userId && !language) {
         return res.status(400).json({ error: 'Either userId or language is required' });
       }
-      
+
+      if (!req.body.password) {
+        return res.status(400).json({ error: 'Password is required to use this feature' });
+      }
+
+      // Validate password (you should implement proper password validation)
+      if (req.body.password !== process.env.APP_PASSWORD) {
+        return res.status(401).json({ error: 'Invalid password' });
+      }
+
       let snippets;
       if (userId) {
         snippets = await storage.getCodeSnippets?.(userId);
       } else if (language) {
         snippets = await storage.getCodeSnippetsByLanguage?.(language);
       }
-      
+
       res.json({ snippets: snippets || [] });
     } catch (error) {
       console.error('Error fetching code snippets:', error);
@@ -356,7 +437,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Specialized chatbot endpoints
-  
+
   // Create specialized chatbot
   app.post('/api/chatbots', async (req, res) => {
     try {
@@ -368,11 +449,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         welcomeMessage, 
         exampleQuestions = [] 
       } = req.body;
-      
+
       if (!name || !systemPrompt) {
         return res.status(400).json({ error: 'Name and systemPrompt are required' });
       }
-      
+
+      if (!req.body.password) {
+        return res.status(400).json({ error: 'Password is required to use this feature' });
+      }
+
+      // Validate password (you should implement proper password validation)
+      if (req.body.password !== process.env.APP_PASSWORD) {
+        return res.status(401).json({ error: 'Invalid password' });
+      }
+
       // Create the chatbot
       const chatbot = await storage.createSpecializedChatbot({
         type: type || 'custom',
@@ -382,7 +472,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         welcomeMessage: welcomeMessage || 'Hello! How can I help you today?',
         exampleQuestions: Array.isArray(exampleQuestions) ? exampleQuestions : [],
       });
-      
+
       res.json({ 
         id: chatbot.id,
         name: chatbot.name
@@ -392,26 +482,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: 'Failed to create specialized chatbot' });
     }
   });
-  
+
   // Get specialized chatbot
   app.get('/api/chatbots/:id', async (req, res) => {
     try {
+      if (!req.body.password) {
+        return res.status(400).json({ error: 'Password is required to use this feature' });
+      }
+
+      // Validate password (you should implement proper password validation)
+      if (req.body.password !== process.env.APP_PASSWORD) {
+        return res.status(401).json({ error: 'Invalid password' });
+      }
       const chatbot = await storage.getSpecializedChatbotById(req.params.id);
-      
+
       if (!chatbot) {
         return res.status(404).json({ error: 'Chatbot not found' });
       }
-      
+
       res.json({ chatbot });
     } catch (error) {
       console.error('Error fetching specialized chatbot:', error);
       res.status(500).json({ error: 'Failed to fetch specialized chatbot' });
     }
   });
-  
+
   // List all specialized chatbots
   app.get('/api/chatbots', async (req, res) => {
     try {
+      if (!req.body.password) {
+        return res.status(400).json({ error: 'Password is required to use this feature' });
+      }
+
+      // Validate password (you should implement proper password validation)
+      if (req.body.password !== process.env.APP_PASSWORD) {
+        return res.status(401).json({ error: 'Invalid password' });
+      }
       const chatbots = await storage.getAllSpecializedChatbots();
       res.json({ chatbots });
     } catch (error) {
@@ -419,55 +525,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: 'Failed to fetch specialized chatbots' });
     }
   });
-  
+
   // Send message to specialized chatbot
   app.post('/api/chatbot-message', async (req, res) => {
     try {
       const { message, chatbotId, systemPrompt, chatHistory = [] } = req.body;
-      
+
       if (!message) {
         return res.status(400).json({ error: 'Message is required' });
       }
-      
+
+      if (!req.body.password) {
+        return res.status(400).json({ error: 'Password is required to use this feature' });
+      }
+
+      // Validate password (you should implement proper password validation)
+      if (req.body.password !== process.env.APP_PASSWORD) {
+        return res.status(401).json({ error: 'Invalid password' });
+      }
+
       // Get the chatbot
       const chatbot = await storage.getSpecializedChatbotById(chatbotId);
-      
+
       if (!chatbot) {
         return res.status(404).json({ error: 'Chatbot not found' });
       }
-      
+
       // Use environment API key
       const apiKey = process.env.OPENAI_API_KEY;
-      
+
       if (!apiKey) {
         return res.status(500).json({ error: 'OpenAI API key not configured' });
       }
-      
+
       // Format chat history with system prompt
       const formattedHistory = [
         { role: 'system', content: chatbot.systemPrompt || systemPrompt },
         ...chatHistory
       ];
-      
+
       // Generate response
       const response = await generateAIResponse(message, formattedHistory, {
         model: 'gpt-4o',
         apiKey
       });
-      
+
       // Store the message and response
       await storage.addSpecializedChatbotMessage(chatbotId, {
         role: 'user',
         content: message,
         timestamp: new Date()
       });
-      
+
       await storage.addSpecializedChatbotMessage(chatbotId, {
         role: 'assistant',
         content: response,
         timestamp: new Date()
       });
-      
+
       res.json({ response });
     } catch (error) {
       console.error('Error sending message to specialized chatbot:', error);
@@ -481,6 +596,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Export project code endpoint
   app.get('/api/export-code', async (req, res) => {
     try {
+      if (!req.body.password) {
+        return res.status(400).json({ error: 'Password is required to use this feature' });
+      }
+
+      // Validate password (you should implement proper password validation)
+      if (req.body.password !== process.env.APP_PASSWORD) {
+        return res.status(401).json({ error: 'Invalid password' });
+      }
       // Create a structured representation of the project files and their contents
       const projectStructure = {
         name: "AI Chatbot Project",
@@ -533,14 +656,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             "1. Clone the repository",
             "2. Run 'npm install' to install dependencies",
             "3. Set up a PostgreSQL database",
-            "4. Set environment variables (DATABASE_URL, OPENAI_API_KEY, ANTHROPIC_API_KEY)",
+            "4. Set environment variables (DATABASE_URL, OPENAI_API_KEY, ANTHROPIC_API_KEY, APP_PASSWORD)",
             "5. Run 'npm run dev' to start the application"
           ]
         },
         environmentVariables: [
           "DATABASE_URL - PostgreSQL connection string",
           "OPENAI_API_KEY - OpenAI API key for AI features",
-          "ANTHROPIC_API_KEY - Anthropic API key for Claude features"
+          "ANTHROPIC_API_KEY - Anthropic API key for Claude features",
+          "APP_PASSWORD - Application password for authentication"
         ],
         aiIntegration: {
           supportedModels: {
@@ -556,7 +680,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
       };
-      
+
       res.json({ code: JSON.stringify(projectStructure, null, 2) });
     } catch (error) {
       console.error('Error exporting project code:', error);

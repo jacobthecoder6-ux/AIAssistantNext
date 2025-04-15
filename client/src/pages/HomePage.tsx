@@ -35,9 +35,9 @@ const HomePage = () => {
   const [selectedModel, setSelectedModel] = useState('gpt-4o');
   const [anthropicModel, setAnthropicModel] = useState('claude-3-7-sonnet-20250219');
   const [aiProvider, setAiProvider] = useState<'openai' | 'anthropic'>('openai');
-  const [openaiApiKey, setOpenaiApiKey] = useState('');
-  const [anthropicApiKey, setAnthropicApiKey] = useState('');
-  const [showApiKeyInputs, setShowApiKeyInputs] = useState(false);
+  const [password, setPassword] = useState('');
+  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('light');
 
   // Animation variants
@@ -158,57 +158,44 @@ const HomePage = () => {
           
           <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
             <div className="w-full flex-1 md:w-auto md:flex-none">
-              {/* API Key Dialog */}
+              {/* Password Dialog */}
               <Dialog>
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm" className="mr-2">
                     <Key className="h-4 w-4 mr-2" />
-                    API Keys
+                    {isUnlocked ? 'Unlocked' : 'Unlock Features'}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[425px]">
                   <DialogHeader>
-                    <DialogTitle>API Keys</DialogTitle>
+                    <DialogTitle>Unlock Features</DialogTitle>
                     <DialogDescription>
-                      Enter your API keys for OpenAI and Anthropic to use their AI models.
+                      Enter your password to unlock all features of the application.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
                     <div className="grid gap-2">
-                      <Label htmlFor="openai-key">OpenAI API Key</Label>
+                      <Label htmlFor="password">Password</Label>
                       <Input
-                        id="openai-key"
+                        id="password"
                         type="password"
-                        placeholder="sk-..."
-                        value={openaiApiKey}
-                        onChange={(e) => setOpenaiApiKey(e.target.value)}
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="anthropic-key">Anthropic API Key</Label>
-                      <Input
-                        id="anthropic-key"
-                        type="password"
-                        placeholder="sk-ant-..."
-                        value={anthropicApiKey}
-                        onChange={(e) => setAnthropicApiKey(e.target.value)}
+                        placeholder="Enter your password..."
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
                       />
                     </div>
                   </div>
                   <DialogFooter>
                     <DialogClose asChild>
                       <Button type="submit" onClick={() => {
-                        if (openaiApiKey) {
-                          localStorage.setItem('api-key', openaiApiKey);
-                        }
-                        if (anthropicApiKey) {
-                          localStorage.setItem('anthropic-api-key', anthropicApiKey);
-                        }
+                        // Here you would typically validate the password with your backend
+                        setIsUnlocked(true);
+                        localStorage.setItem('is-unlocked', 'true');
                         toast({
-                          title: "API Keys Saved",
-                          description: "Your API keys have been saved successfully."
+                          title: "Features Unlocked",
+                          description: "You now have access to all features."
                         });
-                      }}>Save Changes</Button>
+                      }}>Unlock</Button>
                     </DialogClose>
                   </DialogFooter>
                 </DialogContent>
