@@ -143,16 +143,59 @@ export const generateImage = async (
   try {
     const openai = createOpenAIClient(apiKey);
     
-    // Enhanced prompt engineering for better results
-    const enhancedPrompt = `High quality, detailed image of: ${prompt}. Professional, photorealistic style with vibrant colors and natural lighting.`;
+    // Advanced prompt engineering for superior image generation
+    let enhancedPrompt = prompt;
+    
+    // Check if the prompt already has detailed instructions
+    // If not, enhance it with better descriptors
+    if (!prompt.toLowerCase().includes("style:") && 
+        !prompt.toLowerCase().includes("quality:") &&
+        !prompt.toLowerCase().includes("resolution:")) {
+      
+      // Determine style based on prompt content
+      let style = "vivid"; // Default style
+      let quality = "hd"; // Default to high quality
+      
+      // Check prompt for style hints
+      if (prompt.toLowerCase().includes("photo") || 
+          prompt.toLowerCase().includes("realistic") ||
+          prompt.toLowerCase().includes("photograph")) {
+        style = "natural";
+        enhancedPrompt = `Ultra-detailed, professional photograph of ${prompt}. Masterfully composed with perfect lighting, shot on a high-end DSLR camera with shallow depth of field where appropriate. 8K resolution with impeccable details.`;
+      } 
+      else if (prompt.toLowerCase().includes("painting") || 
+               prompt.toLowerCase().includes("artistic") || 
+               prompt.toLowerCase().includes("art")) {
+        style = "vivid";
+        enhancedPrompt = `Breathtaking artistic rendering of ${prompt}. Rich in detail and expression, with dynamic composition and expert use of color theory. Museum-quality artwork with visible brushstrokes and texture.`;
+      } 
+      else if (prompt.toLowerCase().includes("3d") || 
+               prompt.toLowerCase().includes("render") || 
+               prompt.toLowerCase().includes("cgi")) {
+        style = "vivid";
+        enhancedPrompt = `Hyper-realistic 3D rendering of ${prompt}. Created with cutting-edge CGI technology, featuring perfect lighting, physically accurate materials, and photorealistic textures. Ray-traced with global illumination and ambient occlusion.`;
+      } 
+      else if (prompt.toLowerCase().includes("cartoon") || 
+               prompt.toLowerCase().includes("animation") || 
+               prompt.toLowerCase().includes("animated")) {
+        style = "vivid";
+        enhancedPrompt = `Professional animation-style illustration of ${prompt}. Vibrant colors with clean lines, expressive characters, and detailed background elements. Studio-quality design with modern animation aesthetics.`;
+      } 
+      else {
+        // General enhancement for other types of prompts
+        enhancedPrompt = `Stunning, detailed visualization of ${prompt}. Professional quality with perfect composition, dramatic lighting, and rich details. Created with state-of-the-art techniques for maximum visual impact.`;
+      }
+    }
+    
+    console.log(`Generating image with prompt: ${enhancedPrompt}`);
     
     const response = await openai.images.generate({
       model: DEFAULT_IMAGE_MODEL,
       prompt: enhancedPrompt,
       n: 1,
       size: size as any,
-      quality: "standard",
-      style: "vivid",
+      quality: "hd",  // Always use HD quality for better results
+      style: "vivid", // Default style, but our prompt engineering handles specific styles better
     });
     
     return response.data[0].url || '';
@@ -164,8 +207,10 @@ export const generateImage = async (
       throw new Error("Invalid API key. Please check your API key in settings.");
     } else if (error.response?.status === 429) {
       throw new Error("You've reached your API rate limit. Please try again later.");
+    } else if (error.message?.includes("content_policy_violation")) {
+      throw new Error("Your image prompt violates content policy. Please modify your request to comply with OpenAI's content policy.");
     } else {
-      throw new Error("Unable to generate image. Please try again later.");
+      throw new Error("Unable to generate image. Please try again with a different description or check your API key.");
     }
   }
 };
@@ -182,46 +227,104 @@ export const generateCodeAssistance = async (
   try {
     const openai = createOpenAIClient(apiKey);
     
+    // Check if this is a code generation request
+    const isGenerationRequest = 
+      code.includes("Generate") || 
+      task.toLowerCase().includes("generate") || 
+      task.toLowerCase().includes("create") || 
+      task.toLowerCase().includes("build") ||
+      task.toLowerCase().includes("implement") ||
+      task.toLowerCase().includes("develop");
+    
     // Determine what type of code assistance is needed
     const taskLower = task.toLowerCase();
     let systemPrompt = "";
     
-    if (taskLower.includes("debug") || taskLower.includes("fix") || taskLower.includes("error")) {
-      systemPrompt = `You are an expert software developer specialized in ${language} programming. 
-Your task is to debug the provided code. Analyze the code for errors, identify the issues, and provide a fixed version.
+    if (isGenerationRequest) {
+      // Enhanced prompt for complex code generation
+      systemPrompt = `You are an elite software architect and developer with deep expertise in ${language} programming and software engineering. 
+Your task is to generate high-quality, production-ready code based on the user's requirements.
+
+You excel at creating complex software solutions that:
+1. Are well-structured with proper design patterns
+2. Handle error cases thoroughly
+3. Include proper logging, validation, and security best practices
+4. Are optimized for performance and maintainability
+5. Follow language-specific best practices and conventions
+
 Format your response in these sections:
-1. ANALYSIS - Briefly explain what the code is supposed to do and identify the issues
-2. FIXED CODE - Provide the complete fixed code with proper syntax highlighting
-3. EXPLANATION - Explain what was wrong and how your fixes address the issues`;
+1. ARCHITECTURE - Describe the overall structure and approach
+2. COMPLETE CODE - Provide all necessary files and code with proper syntax highlighting, including imports and dependencies
+3. TESTING APPROACH - Suggest how to test this implementation
+4. USAGE EXAMPLES - Show how to use the code
+5. POTENTIAL EXTENSIONS - Briefly suggest ways to extend or enhance this implementation
+
+Your code should be comprehensive, fully-functional, and handle edge cases.`;
+      
+      // Increase tokens for complex generation
+      const response = await openai.chat.completions.create({
+        model: DEFAULT_MODEL,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: `I need you to generate ${language} code for the following task:\n\n${task}\n\nAdditional context or requirements:\n${code}` }
+        ] as any,
+        temperature: 0.4,
+        max_tokens: 4000, // Increased for complex code generation
+      });
+      
+      return response.choices[0].message.content || "Failed to generate code.";
+      
+    } else if (taskLower.includes("debug") || taskLower.includes("fix") || taskLower.includes("error")) {
+      systemPrompt = `You are an elite software developer and debugger specialized in ${language} programming. 
+Your task is to debug the provided code with the diligence of a senior developer. Analyze the code for errors, identify all issues (including subtle bugs and edge cases), and provide a fully fixed version.
+
+Format your response in these sections:
+1. ANALYSIS - Explain what the code is supposed to do and comprehensively identify all issues
+2. ROOT CAUSES - Identify the underlying causes of the issues, not just symptoms
+3. FIXED CODE - Provide the complete fixed code with proper syntax highlighting
+4. EXPLANATION - Explain what was wrong and how your fixes address each issue
+5. PREVENTION - Suggest how to prevent similar issues in the future`;
     } else if (taskLower.includes("optimize") || taskLower.includes("improve") || taskLower.includes("performance")) {
-      systemPrompt = `You are an expert software developer specialized in ${language} programming. 
-Your task is to optimize the provided code for better performance and readability.
+      systemPrompt = `You are an elite software performance engineer specialized in ${language} programming. 
+Your task is to optimize the provided code for maximum efficiency and readability.
+
 Format your response in these sections:
-1. ANALYSIS - Briefly explain what the code does and identify optimization opportunities
-2. OPTIMIZED CODE - Provide the complete optimized code with proper syntax highlighting
-3. IMPROVEMENTS - Explain specific optimizations and why they improve the code`;
+1. PERFORMANCE ANALYSIS - Identify all performance bottlenecks and inefficiencies
+2. OPTIMIZATION STRATEGY - Explain your approach to optimization
+3. OPTIMIZED CODE - Provide the complete optimized code with proper syntax highlighting
+4. BENCHMARKS - Discuss expected performance improvements
+5. TRADE-OFFS - Explain any trade-offs made between performance, readability, and maintainability`;
     } else if (taskLower.includes("explain") || taskLower.includes("understand")) {
-      systemPrompt = `You are an expert software developer specialized in ${language} programming.
-Your task is to explain the provided code in detail.
+      systemPrompt = `You are an elite software educator specialized in ${language} programming.
+Your task is to explain the provided code with exceptional clarity and depth.
+
 Format your response in these sections:
-1. OVERVIEW - High-level explanation of what the code does
-2. LINE-BY-LINE - Detailed explanation of important sections
-3. SUGGESTIONS - Any best practices or improvements that could be made`;
+1. EXECUTIVE SUMMARY - Explain what the code accomplishes in simple terms
+2. ARCHITECTURE - Explain the overall structure and design patterns used
+3. DETAILED WALKTHROUGH - Provide a comprehensive line-by-line or section-by-section explanation
+4. ADVANCED CONCEPTS - Explain any complex algorithms, patterns, or language features used
+5. BEST PRACTICES - Evaluate adherence to best practices and suggest improvements`;
     } else if (taskLower.includes("test") || taskLower.includes("unit test")) {
-      systemPrompt = `You are an expert software developer specialized in ${language} programming.
-Your task is to create unit tests for the provided code.
+      systemPrompt = `You are an elite software test engineer specialized in ${language} programming.
+Your task is to create comprehensive test coverage for the provided code.
+
 Format your response in these sections:
-1. ANALYSIS - Briefly explain what the code does and what should be tested
-2. TEST CODE - Provide complete test code with proper syntax highlighting
-3. TEST CASES - Explain what each test case is verifying`;
+1. TEST STRATEGY - Outline the overall testing approach
+2. TEST CASES - Identify all scenarios that should be tested, including edge cases
+3. COMPLETE TEST CODE - Provide thorough test code with proper syntax highlighting
+4. MOCKING STRATEGY - Explain how to mock dependencies
+5. COVERAGE ANALYSIS - Discuss expected test coverage and any areas difficult to test`;
     } else {
       // Default case for general code enhancement
-      systemPrompt = `You are an expert software developer specialized in ${language} programming.
-Your task is to improve the provided code in terms of readability, maintainability, and adherence to best practices.
+      systemPrompt = `You are an elite software architect specialized in ${language} programming.
+Your task is to analyze and enhance the provided code to professional standards.
+
 Format your response in these sections:
-1. ANALYSIS - Briefly explain what the code does
+1. CODE REVIEW - Thoroughly assess code quality, architecture, and potential issues
 2. IMPROVED CODE - Provide the complete improved code with proper syntax highlighting
-3. ENHANCEMENTS - Explain your changes and why they improve the code`;
+3. ENHANCEMENTS - Explain all modifications and how they improve the code
+4. ARCHITECTURAL SUGGESTIONS - Propose any structural improvements
+5. NEXT STEPS - Suggest future improvements beyond the current enhancements`;
     }
     
     const messages = [
@@ -232,8 +335,8 @@ Format your response in these sections:
     const response = await openai.chat.completions.create({
       model: DEFAULT_MODEL,
       messages: messages as any,
-      temperature: 0.5,
-      max_tokens: 2000,
+      temperature: 0.4,
+      max_tokens: 3000, // Increased token limit for more comprehensive responses
     });
     
     return response.choices[0].message.content || "Failed to generate code assistance.";
