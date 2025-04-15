@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { generateAIResponse, detectLanguageWithAI } from "./lib/openai";
+import { generateAIResponse, detectLanguageWithAI, generateImage, generateCodeAssistance, solveMathProblem } from "./lib/openai";
 import { generateAnthropicResponse, detectLanguageWithAnthropic } from "./lib/anthropic";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -184,6 +184,172 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error clearing chats:', error);
       res.status(500).json({ error: 'Failed to clear chats' });
+    }
+  });
+
+  // Image generation endpoint
+  app.post('/api/generate-image', async (req, res) => {
+    try {
+      const { prompt, apiKey, size = '1024x1024' } = req.body;
+      
+      if (!prompt) {
+        return res.status(400).json({ error: 'Prompt is required' });
+      }
+      
+      if (!apiKey) {
+        return res.status(400).json({ error: 'OpenAI API key is required' });
+      }
+      
+      const imageUrl = await generateImage(prompt, apiKey, size);
+      
+      res.json({ imageUrl });
+    } catch (error) {
+      console.error('Error generating image:', error);
+      res.status(500).json({ 
+        error: 'Failed to generate image',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+  
+  // Code assistance endpoint
+  app.post('/api/code-assistance', async (req, res) => {
+    try {
+      const { code, language, task, apiKey } = req.body;
+      
+      if (!code) {
+        return res.status(400).json({ error: 'Code is required' });
+      }
+      
+      if (!apiKey) {
+        return res.status(400).json({ error: 'OpenAI API key is required' });
+      }
+      
+      const result = await generateCodeAssistance(code, language, task, apiKey);
+      
+      if (req.body.chatId) {
+        // Record the interaction in chat history
+        await storage.addMessageToChat(req.body.chatId, {
+          type: 'user',
+          content: `Code assistance request for ${language}: ${task}\n\`\`\`${language}\n${code}\n\`\`\``,
+          timestamp: new Date(),
+          codeBlocks: { language, code }
+        });
+        
+        await storage.addMessageToChat(req.body.chatId, {
+          type: 'bot',
+          content: result,
+          timestamp: new Date()
+        });
+      }
+      
+      // Store the code snippet for future reference
+      if (req.body.userId) {
+        await storage.createCodeSnippet?.({
+          userId: req.body.userId,
+          title: task || 'Code Snippet',
+          description: 'Created via Code Assistant',
+          language: language || 'text',
+          code,
+          tags: ['generated'],
+        });
+      }
+      
+      res.json({ result });
+    } catch (error) {
+      console.error('Error with code assistance:', error);
+      res.status(500).json({ 
+        error: 'Failed to process code',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+  
+  // Math solver endpoint
+  app.post('/api/solve-math', async (req, res) => {
+    try {
+      const { problem, apiKey, showSteps = true } = req.body;
+      
+      if (!problem) {
+        return res.status(400).json({ error: 'Math problem is required' });
+      }
+      
+      if (!apiKey) {
+        return res.status(400).json({ error: 'OpenAI API key is required' });
+      }
+      
+      const solution = await solveMathProblem(problem, apiKey, showSteps);
+      
+      if (req.body.chatId) {
+        // Record the interaction in chat history
+        await storage.addMessageToChat(req.body.chatId, {
+          type: 'user',
+          content: `Math problem: ${problem}`,
+          timestamp: new Date()
+        });
+        
+        await storage.addMessageToChat(req.body.chatId, {
+          type: 'bot',
+          content: solution,
+          timestamp: new Date()
+        });
+      }
+      
+      res.json({ solution });
+    } catch (error) {
+      console.error('Error solving math problem:', error);
+      res.status(500).json({ 
+        error: 'Failed to solve math problem',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+  
+  // Code snippet storage and retrieval endpoints
+  app.post('/api/code-snippets', async (req, res) => {
+    try {
+      const { userId, title, description, language, code, tags } = req.body;
+      
+      if (!userId || !code || !language) {
+        return res.status(400).json({ error: 'UserId, code, and language are required' });
+      }
+      
+      const snippet = await storage.createCodeSnippet?.({
+        userId,
+        title: title || 'Untitled Snippet',
+        description: description || '',
+        language,
+        code,
+        tags: tags || [],
+      });
+      
+      res.json({ snippet });
+    } catch (error) {
+      console.error('Error saving code snippet:', error);
+      res.status(500).json({ error: 'Failed to save code snippet' });
+    }
+  });
+  
+  app.get('/api/code-snippets', async (req, res) => {
+    try {
+      const userId = Number(req.query.userId);
+      const language = req.query.language as string;
+      
+      if (!userId && !language) {
+        return res.status(400).json({ error: 'Either userId or language is required' });
+      }
+      
+      let snippets;
+      if (userId) {
+        snippets = await storage.getCodeSnippets?.(userId);
+      } else if (language) {
+        snippets = await storage.getCodeSnippetsByLanguage?.(language);
+      }
+      
+      res.json({ snippets: snippets || [] });
+    } catch (error) {
+      console.error('Error fetching code snippets:', error);
+      res.status(500).json({ error: 'Failed to fetch code snippets' });
     }
   });
 
