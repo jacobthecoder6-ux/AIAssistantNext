@@ -1,18 +1,44 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'wouter';
+import { useLocation, Link } from 'wouter';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { supportedLanguages } from '@/lib/languageUtils';
 import { MODELS } from '@/lib/openai';
-import { Check, Brain, Globe, Bot, Settings, ChevronRight, Sparkles } from 'lucide-react';
+import { Check, Brain, Globe, Bot, Settings, ChevronRight, Sparkles, Key, Menu, Moon, Sun, InfoIcon, Github, Laptop } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 
 const HomePage = () => {
+  const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [selectedLanguage, setSelectedLanguage] = useState('en');
   const [selectedModel, setSelectedModel] = useState('gpt-4o');
   const [anthropicModel, setAnthropicModel] = useState('claude-3-7-sonnet-20250219');
   const [aiProvider, setAiProvider] = useState<'openai' | 'anthropic'>('openai');
+  const [openaiApiKey, setOpenaiApiKey] = useState('');
+  const [anthropicApiKey, setAnthropicApiKey] = useState('');
+  const [showApiKeyInputs, setShowApiKeyInputs] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('light');
 
   // Animation variants
   const containerVariants = {
@@ -34,13 +60,42 @@ const HomePage = () => {
     }
   };
 
-  // Function to start chat
+  // Function to validate and start chat
   const startChat = () => {
-    // Store preferences
+    // Validate API key is provided based on selected provider
+    if (aiProvider === 'openai' && !openaiApiKey) {
+      toast({
+        title: "OpenAI API Key Required",
+        description: "Please enter your OpenAI API key to continue",
+        variant: "destructive"
+      });
+      setShowApiKeyInputs(true);
+      return;
+    }
+    
+    if (aiProvider === 'anthropic' && !anthropicApiKey) {
+      toast({
+        title: "Anthropic API Key Required",
+        description: "Please enter your Anthropic API key to continue",
+        variant: "destructive"
+      });
+      setShowApiKeyInputs(true);
+      return;
+    }
+    
+    // Store preferences and API keys
     localStorage.setItem('preferred-language', selectedLanguage);
     localStorage.setItem('preferred-model', selectedModel);
     localStorage.setItem('preferred-anthropic-model', anthropicModel);
     localStorage.setItem('preferred-ai-provider', aiProvider);
+    
+    if (openaiApiKey) {
+      localStorage.setItem('api-key', openaiApiKey);
+    }
+    
+    if (anthropicApiKey) {
+      localStorage.setItem('anthropic-api-key', anthropicApiKey);
+    }
 
     // Navigate to chat page
     setLocation('/chat');
@@ -61,185 +116,312 @@ const HomePage = () => {
     if (storedProvider && (storedProvider === 'openai' || storedProvider === 'anthropic')) {
       setAiProvider(storedProvider as 'openai' | 'anthropic');
     }
+    
+    const storedOpenAIKey = localStorage.getItem('api-key');
+    if (storedOpenAIKey) setOpenaiApiKey(storedOpenAIKey);
+    
+    const storedAnthropicKey = localStorage.getItem('anthropic-api-key');
+    if (storedAnthropicKey) setAnthropicApiKey(storedAnthropicKey);
+  }, []);
+
+  // Theme toggling
+  const setAppTheme = (newTheme: 'light' | 'dark' | 'system') => {
+    setTheme(newTheme);
+    localStorage.setItem('preferred-theme', newTheme);
+    
+    if (newTheme === 'dark' || (newTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
+
+  // Load theme on mount
+  useEffect(() => {
+    const storedTheme = localStorage.getItem('preferred-theme') as 'light' | 'dark' | 'system' | null;
+    if (storedTheme) {
+      setAppTheme(storedTheme);
+    }
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex flex-col items-center justify-center p-4">
-      <motion.div 
-        initial="hidden"
-        animate="visible"
-        variants={containerVariants}
-        className="max-w-5xl w-full"
-      >
-        {/* Header */}
-        <motion.div variants={itemVariants} className="text-center mb-12">
-          <h1 className="text-4xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 mb-4">
-            The Ultimate AI Assistant
-          </h1>
-          <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            Experience the power of advanced AI with support for multiple languages and models. Your ultimate multilingual companion.
-          </p>
-        </motion.div>
-
-        {/* Main content */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          {/* Model Selection Card */}
-          <motion.div variants={itemVariants}>
-            <Card className="p-6 h-full shadow-lg hover:shadow-xl transition-shadow">
-              <div className="flex items-center mb-4">
-                <Brain className="w-6 h-6 text-blue-500 mr-2" />
-                <h2 className="text-xl font-semibold">Choose Your AI</h2>
-              </div>
-              
-              <div className="space-y-4">
-                <div className="flex flex-col space-y-2">
-                  <label className="font-medium text-sm">AI Provider</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button 
-                      variant={aiProvider === 'openai' ? 'default' : 'outline'}
-                      onClick={() => setAiProvider('openai')}
-                      className="justify-start"
-                    >
-                      <Check className={`w-4 h-4 mr-2 ${aiProvider === 'openai' ? 'opacity-100' : 'opacity-0'}`} />
-                      OpenAI
-                    </Button>
-                    <Button 
-                      variant={aiProvider === 'anthropic' ? 'default' : 'outline'}
-                      onClick={() => setAiProvider('anthropic')}
-                      className="justify-start"
-                    >
-                      <Check className={`w-4 h-4 mr-2 ${aiProvider === 'anthropic' ? 'opacity-100' : 'opacity-0'}`} />
-                      Anthropic
-                    </Button>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex flex-col">
+      {/* Navigation Bar */}
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-14 items-center">
+          <div className="mr-4 flex">
+            <Link href="/" className="flex items-center">
+              <Brain className="h-6 w-6 text-blue-600 mr-2" />
+              <span className="font-bold text-xl">UltimateChatbot</span>
+            </Link>
+          </div>
+          
+          <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+            <div className="w-full flex-1 md:w-auto md:flex-none">
+              {/* API Key Dialog */}
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="mr-2">
+                    <Key className="h-4 w-4 mr-2" />
+                    API Keys
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>API Keys</DialogTitle>
+                    <DialogDescription>
+                      Enter your API keys for OpenAI and Anthropic to use their AI models.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="openai-key">OpenAI API Key</Label>
+                      <Input
+                        id="openai-key"
+                        type="password"
+                        placeholder="sk-..."
+                        value={openaiApiKey}
+                        onChange={(e) => setOpenaiApiKey(e.target.value)}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="anthropic-key">Anthropic API Key</Label>
+                      <Input
+                        id="anthropic-key"
+                        type="password"
+                        placeholder="sk-ant-..."
+                        value={anthropicApiKey}
+                        onChange={(e) => setAnthropicApiKey(e.target.value)}
+                      />
+                    </div>
                   </div>
-                </div>
+                  <DialogFooter>
+                    <DialogClose asChild>
+                      <Button type="submit" onClick={() => {
+                        if (openaiApiKey) {
+                          localStorage.setItem('api-key', openaiApiKey);
+                        }
+                        if (anthropicApiKey) {
+                          localStorage.setItem('anthropic-api-key', anthropicApiKey);
+                        }
+                        toast({
+                          title: "API Keys Saved",
+                          description: "Your API keys have been saved successfully."
+                        });
+                      }}>Save Changes</Button>
+                    </DialogClose>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+              
+              {/* Theme Selector */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    {theme === 'light' && <Sun className="h-4 w-4" />}
+                    {theme === 'dark' && <Moon className="h-4 w-4" />}
+                    {theme === 'system' && <Laptop className="h-4 w-4" />}
+                    <span className="ml-2 hidden md:inline">Theme</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setAppTheme('light')}>
+                    <Sun className="mr-2 h-4 w-4" />
+                    <span>Light</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setAppTheme('dark')}>
+                    <Moon className="mr-2 h-4 w-4" />
+                    <span>Dark</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setAppTheme('system')}>
+                    <Laptop className="mr-2 h-4 w-4" />
+                    <span>System</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </div>
+      </header>
+    
+      {/* Main Content */}
+      <main className="flex-grow flex items-center justify-center p-4">
+        <motion.div 
+          initial="hidden"
+          animate="visible"
+          variants={containerVariants}
+          className="max-w-5xl w-full"
+        >
+          {/* Header */}
+          <motion.div variants={itemVariants} className="text-center mb-12">
+            <h1 className="text-4xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-500 mb-4">
+              The Ultimate AI Assistant
+            </h1>
+            <p className="text-lg md:text-xl text-gray-800 dark:text-gray-100 max-w-2xl mx-auto font-medium">
+              Experience the power of advanced AI with support for multiple languages and models. Your ultimate multilingual companion.
+            </p>
+          </motion.div>
 
-                {aiProvider === 'openai' && (
+          {/* Main content */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            {/* Model Selection Card */}
+            <motion.div variants={itemVariants}>
+              <Card className="p-6 h-full shadow-lg hover:shadow-xl transition-shadow border-2 dark:bg-gray-800/50 dark:border-gray-700">
+                <div className="flex items-center mb-4">
+                  <Brain className="w-6 h-6 text-blue-500 mr-2" />
+                  <h2 className="text-xl font-semibold dark:text-white">Choose Your AI</h2>
+                </div>
+                
+                <div className="space-y-4">
                   <div className="flex flex-col space-y-2">
-                    <label className="font-medium text-sm">OpenAI Model</label>
-                    <div className="grid grid-cols-1 gap-2">
-                      {MODELS.map(model => (
+                    <label className="font-medium text-sm dark:text-gray-200">AI Provider</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button 
+                        variant={aiProvider === 'openai' ? 'default' : 'outline'}
+                        onClick={() => setAiProvider('openai')}
+                        className="justify-start"
+                      >
+                        <Check className={`w-4 h-4 mr-2 ${aiProvider === 'openai' ? 'opacity-100' : 'opacity-0'}`} />
+                        OpenAI
+                      </Button>
+                      <Button 
+                        variant={aiProvider === 'anthropic' ? 'default' : 'outline'}
+                        onClick={() => setAiProvider('anthropic')}
+                        className="justify-start"
+                      >
+                        <Check className={`w-4 h-4 mr-2 ${aiProvider === 'anthropic' ? 'opacity-100' : 'opacity-0'}`} />
+                        Anthropic
+                      </Button>
+                    </div>
+                  </div>
+
+                  {aiProvider === 'openai' && (
+                    <div className="flex flex-col space-y-2">
+                      <label className="font-medium text-sm dark:text-gray-200">OpenAI Model</label>
+                      <div className="grid grid-cols-1 gap-2">
+                        {MODELS.map(model => (
+                          <Button 
+                            key={model.id}
+                            variant={selectedModel === model.id ? 'default' : 'outline'}
+                            onClick={() => setSelectedModel(model.id)}
+                            className="justify-start"
+                          >
+                            <Check className={`w-4 h-4 mr-2 ${selectedModel === model.id ? 'opacity-100' : 'opacity-0'}`} />
+                            {model.name}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {aiProvider === 'anthropic' && (
+                    <div className="flex flex-col space-y-2">
+                      <label className="font-medium text-sm dark:text-gray-200">Anthropic Model</label>
+                      <div className="grid grid-cols-1 gap-2">
                         <Button 
-                          key={model.id}
-                          variant={selectedModel === model.id ? 'default' : 'outline'}
-                          onClick={() => setSelectedModel(model.id)}
+                          variant={anthropicModel === 'claude-3-7-sonnet-20250219' ? 'default' : 'outline'}
+                          onClick={() => setAnthropicModel('claude-3-7-sonnet-20250219')}
                           className="justify-start"
                         >
-                          <Check className={`w-4 h-4 mr-2 ${selectedModel === model.id ? 'opacity-100' : 'opacity-0'}`} />
-                          {model.name}
+                          <Check className={`w-4 h-4 mr-2 ${anthropicModel === 'claude-3-7-sonnet-20250219' ? 'opacity-100' : 'opacity-0'}`} />
+                          Claude 3.7 Sonnet
                         </Button>
-                      ))}
+                        <Button 
+                          variant={anthropicModel === 'claude-3-opus-20240229' ? 'default' : 'outline'}
+                          onClick={() => setAnthropicModel('claude-3-opus-20240229')}
+                          className="justify-start"
+                        >
+                          <Check className={`w-4 h-4 mr-2 ${anthropicModel === 'claude-3-opus-20240229' ? 'opacity-100' : 'opacity-0'}`} />
+                          Claude 3 Opus
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                )}
-
-                {aiProvider === 'anthropic' && (
-                  <div className="flex flex-col space-y-2">
-                    <label className="font-medium text-sm">Anthropic Model</label>
-                    <div className="grid grid-cols-1 gap-2">
-                      <Button 
-                        variant={anthropicModel === 'claude-3-7-sonnet-20250219' ? 'default' : 'outline'}
-                        onClick={() => setAnthropicModel('claude-3-7-sonnet-20250219')}
-                        className="justify-start"
-                      >
-                        <Check className={`w-4 h-4 mr-2 ${anthropicModel === 'claude-3-7-sonnet-20250219' ? 'opacity-100' : 'opacity-0'}`} />
-                        Claude 3.7 Sonnet
-                      </Button>
-                      <Button 
-                        variant={anthropicModel === 'claude-3-opus-20240229' ? 'default' : 'outline'}
-                        onClick={() => setAnthropicModel('claude-3-opus-20240229')}
-                        className="justify-start"
-                      >
-                        <Check className={`w-4 h-4 mr-2 ${anthropicModel === 'claude-3-opus-20240229' ? 'opacity-100' : 'opacity-0'}`} />
-                        Claude 3 Opus
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </Card>
-          </motion.div>
-
-          {/* Language Selection Card */}
-          <motion.div variants={itemVariants}>
-            <Card className="p-6 h-full shadow-lg hover:shadow-xl transition-shadow">
-              <div className="flex items-center mb-4">
-                <Globe className="w-6 h-6 text-green-500 mr-2" />
-                <h2 className="text-xl font-semibold">Choose Your Language</h2>
-              </div>
-              
-              <div className="space-y-4">
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Our AI understands and responds in multiple languages. Select your preferred language:
-                </p>
-                <div className="grid grid-cols-2 gap-2 max-h-[240px] overflow-y-auto pr-2">
-                  {supportedLanguages.map(language => (
-                    <Button 
-                      key={language.code}
-                      variant={selectedLanguage === language.code ? 'default' : 'outline'}
-                      onClick={() => setSelectedLanguage(language.code)}
-                      className="justify-start"
-                    >
-                      <Check className={`w-4 h-4 mr-2 ${selectedLanguage === language.code ? 'opacity-100' : 'opacity-0'}`} />
-                      <span className="mr-2">{language.flag}</span>
-                      {language.name}
-                    </Button>
-                  ))}
+                  )}
                 </div>
-              </div>
-            </Card>
-          </motion.div>
+              </Card>
+            </motion.div>
 
-          {/* Features Card */}
-          <motion.div variants={itemVariants}>
-            <Card className="p-6 h-full shadow-lg hover:shadow-xl transition-shadow">
-              <div className="flex items-center mb-4">
-                <Sparkles className="w-6 h-6 text-purple-500 mr-2" />
-                <h2 className="text-xl font-semibold">Key Features</h2>
-              </div>
-              
-              <ul className="space-y-3">
-                <li className="flex items-start">
-                  <Check className="w-5 h-5 text-green-500 mr-2 mt-0.5" />
-                  <span>Advanced multilingual capabilities</span>
-                </li>
-                <li className="flex items-start">
-                  <Check className="w-5 h-5 text-green-500 mr-2 mt-0.5" />
-                  <span>Multiple AI models from OpenAI and Anthropic</span>
-                </li>
-                <li className="flex items-start">
-                  <Check className="w-5 h-5 text-green-500 mr-2 mt-0.5" />
-                  <span>Intelligent context awareness</span>
-                </li>
-                <li className="flex items-start">
-                  <Check className="w-5 h-5 text-green-500 mr-2 mt-0.5" />
-                  <span>Customizable chat experience</span>
-                </li>
-                <li className="flex items-start">
-                  <Check className="w-5 h-5 text-green-500 mr-2 mt-0.5" />
-                  <span>Conversation history and export</span>
-                </li>
-                <li className="flex items-start">
-                  <Check className="w-5 h-5 text-green-500 mr-2 mt-0.5" />
-                  <span>Dark and light theme support</span>
-                </li>
-              </ul>
-            </Card>
-          </motion.div>
-        </div>
+            {/* Language Selection Card */}
+            <motion.div variants={itemVariants}>
+              <Card className="p-6 h-full shadow-lg hover:shadow-xl transition-shadow border-2 dark:bg-gray-800/50 dark:border-gray-700">
+                <div className="flex items-center mb-4">
+                  <Globe className="w-6 h-6 text-green-500 mr-2" />
+                  <h2 className="text-xl font-semibold dark:text-white">Choose Your Language</h2>
+                </div>
+                
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    Our AI understands and responds in multiple languages. Select your preferred language:
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 max-h-[240px] overflow-y-auto pr-2">
+                    {supportedLanguages.map(language => (
+                      <Button 
+                        key={language.code}
+                        variant={selectedLanguage === language.code ? 'default' : 'outline'}
+                        onClick={() => setSelectedLanguage(language.code)}
+                        className="justify-start"
+                      >
+                        <Check className={`w-4 h-4 mr-2 ${selectedLanguage === language.code ? 'opacity-100' : 'opacity-0'}`} />
+                        <span className="mr-2">{language.flag}</span>
+                        {language.name}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
 
-        {/* Start Button */}
-        <motion.div variants={itemVariants} className="flex justify-center">
-          <Button 
-            onClick={startChat} 
-            size="lg" 
-            className="group px-8 py-6 text-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-          >
-            Start Chatting Now
-            <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-          </Button>
+            {/* Features Card */}
+            <motion.div variants={itemVariants}>
+              <Card className="p-6 h-full shadow-lg hover:shadow-xl transition-shadow border-2 dark:bg-gray-800/50 dark:border-gray-700">
+                <div className="flex items-center mb-4">
+                  <Sparkles className="w-6 h-6 text-purple-500 mr-2" />
+                  <h2 className="text-xl font-semibold dark:text-white">Key Features</h2>
+                </div>
+                
+                <ul className="space-y-3">
+                  <li className="flex items-start">
+                    <Check className="w-5 h-5 text-green-500 mr-2 mt-0.5" />
+                    <span className="dark:text-gray-200">Advanced multilingual capabilities</span>
+                  </li>
+                  <li className="flex items-start">
+                    <Check className="w-5 h-5 text-green-500 mr-2 mt-0.5" />
+                    <span className="dark:text-gray-200">Multiple AI models from OpenAI and Anthropic</span>
+                  </li>
+                  <li className="flex items-start">
+                    <Check className="w-5 h-5 text-green-500 mr-2 mt-0.5" />
+                    <span className="dark:text-gray-200">Intelligent context awareness</span>
+                  </li>
+                  <li className="flex items-start">
+                    <Check className="w-5 h-5 text-green-500 mr-2 mt-0.5" />
+                    <span className="dark:text-gray-200">Customizable chat experience</span>
+                  </li>
+                  <li className="flex items-start">
+                    <Check className="w-5 h-5 text-green-500 mr-2 mt-0.5" />
+                    <span className="dark:text-gray-200">Conversation history and export</span>
+                  </li>
+                  <li className="flex items-start">
+                    <Check className="w-5 h-5 text-green-500 mr-2 mt-0.5" />
+                    <span className="dark:text-gray-200">Dark and light theme support</span>
+                  </li>
+                </ul>
+              </Card>
+            </motion.div>
+          </div>
+
+          {/* Start Button */}
+          <motion.div variants={itemVariants} className="flex justify-center">
+            <Button 
+              onClick={startChat} 
+              size="lg" 
+              className="group px-8 py-6 text-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+            >
+              Start Chatting Now
+              <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </motion.div>
         </motion.div>
-      </motion.div>
+      </main>
     </div>
   );
 };
