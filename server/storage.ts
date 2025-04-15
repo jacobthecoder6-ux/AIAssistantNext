@@ -1,9 +1,12 @@
 import { db } from './db';
 import { 
-  users, chats, messages, codeSnippets, promptTemplates,
+  users, chats, messages, codeSnippets, promptTemplates, 
+  specializedChatbots, specializedChatbotMessages,
   type User, type InsertUser, type InsertChat, type InsertMessage,
-  type CodeSnippet, type PromptTemplate,
-  type InsertCodeSnippet, type InsertPromptTemplate
+  type CodeSnippet, type PromptTemplate, 
+  type SpecializedChatbot, type SpecializedChatbotMessage,
+  type InsertCodeSnippet, type InsertPromptTemplate,
+  type InsertSpecializedChatbot, type InsertSpecializedChatbotMessage
 } from '@shared/schema';
 import { eq, desc, and } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
