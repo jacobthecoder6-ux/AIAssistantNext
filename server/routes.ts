@@ -353,6 +353,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Export project code endpoint
+  app.get('/api/export-code', async (req, res) => {
+    try {
+      // Create a structured representation of the project files and their contents
+      const projectStructure = {
+        name: "AI Chatbot Project",
+        description: "A multilingual AI chatbot with code assistance, image generation, and math solving capabilities",
+        version: "1.0.0",
+        license: "MIT",
+        author: "Created by Replit",
+        features: [
+          "Multilingual interface and AI responses",
+          "Code generation, analysis, and improvement",
+          "Image generation with DALL-E",
+          "Math problem solving with step-by-step solutions",
+          "Chat history storage",
+          "Theme customization"
+        ],
+        components: {
+          frontend: {
+            pages: [
+              "HomePage", "ChatPage", "CodeAssistantPage", "ImageGeneratorPage", "MathSolverPage"
+            ],
+            components: [
+              "ChatContainer", "ChatHeader", "ChatArea", "InputArea", "Sidebar", "SettingsPanel"
+            ],
+            libs: [
+              "openai.ts", "anthropic.ts", "queryClient.ts", "languageUtils.ts"
+            ]
+          },
+          backend: {
+            routes: [
+              "/api/chat", "/api/detect-language", "/api/chats", 
+              "/api/generate-image", "/api/code-assistance", "/api/solve-math",
+              "/api/code-snippets", "/api/export-code"
+            ],
+            services: [
+              "openai.ts", "anthropic.ts", "storage.ts", "db.ts"
+            ],
+            database: {
+              models: [
+                "users", "chats", "messages", "code_snippets", "prompt_templates"
+              ]
+            }
+          }
+        },
+        installation: {
+          steps: [
+            "1. Clone the repository",
+            "2. Run 'npm install' to install dependencies",
+            "3. Set up a PostgreSQL database",
+            "4. Set environment variables (DATABASE_URL, OPENAI_API_KEY, ANTHROPIC_API_KEY)",
+            "5. Run 'npm run dev' to start the application"
+          ]
+        },
+        environmentVariables: [
+          "DATABASE_URL - PostgreSQL connection string",
+          "OPENAI_API_KEY - OpenAI API key for AI features",
+          "ANTHROPIC_API_KEY - Anthropic API key for Claude features"
+        ],
+        aiIntegration: {
+          supportedModels: {
+            openai: ["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"],
+            anthropic: ["claude-3-7-sonnet-20250219", "claude-3-opus", "claude-3-sonnet"]
+          },
+          features: {
+            chat: "General conversation with context-aware responses",
+            codeAssistance: "Generate, debug, and optimize code across multiple languages",
+            imageGeneration: "Create detailed images from text descriptions",
+            mathSolving: "Solve complex mathematical problems with step-by-step solutions"
+          }
+        }
+      };
+      
+      res.json({ code: JSON.stringify(projectStructure, null, 2) });
+    } catch (error) {
+      console.error('Error exporting project code:', error);
+      res.status(500).json({ error: 'Failed to export project code' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

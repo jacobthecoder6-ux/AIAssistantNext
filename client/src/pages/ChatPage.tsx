@@ -3,7 +3,12 @@ import ChatContainer from "../components/ChatContainer";
 import useChatState from "../hooks/useChatState";
 import { useToast } from "@/hooks/use-toast";
 
-const ChatPage = () => {
+interface ChatPageProps {
+  currentChatId?: string | null;
+  onToggleSidebar?: () => void;
+}
+
+const ChatPage = ({ currentChatId, onToggleSidebar }: ChatPageProps) => {
   const { toast } = useToast();
   const {
     messages,
@@ -54,6 +59,13 @@ const ChatPage = () => {
       setFontSize(parseInt(savedFontSize));
     }
   }, []);
+  
+  // Load chat if currentChatId is provided
+  useEffect(() => {
+    if (currentChatId) {
+      loadChat(currentChatId);
+    }
+  }, [currentChatId]);
 
   // Apply theme to document body
   useEffect(() => {
@@ -88,7 +100,7 @@ const ChatPage = () => {
       onNewChat={startNewChat}
       onClearHistory={clearHistory}
       onLoadChat={loadChat}
-      onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+      onToggleSidebar={onToggleSidebar || (() => setIsSidebarOpen(!isSidebarOpen))}
     />
   );
 };
