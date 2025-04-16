@@ -437,30 +437,48 @@ const HomePage = () => {
               <GoogleLogin
                 onSuccess={async (credentialResponse) => {
                   try {
+                    const password = prompt("Please create a password for your account:");
+                    if (!password) {
+                      toast({
+                        title: "Error",
+                        description: "Password is required",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+
                     const result = await fetch('/api/auth/google', {
                       method: 'POST',
                       headers: {
                         'Content-Type': 'application/json',
                       },
-                      body: JSON.stringify({ token: credentialResponse.credential }),
+                      body: JSON.stringify({ 
+                        token: credentialResponse.credential,
+                        password: password 
+                      }),
                     });
                     
                     if (result.ok) {
                       toast({
                         title: "Success",
-                        description: "Successfully signed up! You can now set your password.",
+                        description: "Successfully signed up! You can now use your password to access features.",
                       });
-                      setShowPasswordDialog(true);
+                      localStorage.setItem('auth-password', password);
+                    } else {
+                      const data = await result.json();
+                      throw new Error(data.error || 'Failed to sign up');
                     }
                   } catch (error) {
+                    console.error('Sign up error:', error);
                     toast({
                       title: "Error",
-                      description: "Failed to sign up with Google",
+                      description: error instanceof Error ? error.message : "Failed to sign up with Google",
                       variant: "destructive",
                     });
                   }
                 }}
-                onError={() => {
+                onError={(error) => {
+                  console.error('Google sign in error:', error);
                   toast({
                     title: "Error",
                     description: "Failed to sign up with Google",

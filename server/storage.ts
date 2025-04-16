@@ -10,6 +10,7 @@ import {
 } from '@shared/schema';
 import { eq, desc, and } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
+import fs from 'fs/promises'; // Import fs/promises for async file operations
 
 // Types for chat and messages (for in-memory representation)
 export interface Message {
@@ -40,7 +41,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser?(id: number, data: Partial<User>): Promise<User | undefined>;
-  
+
   // Chat operations
   createChat(title: string, userId?: number, aiProvider?: string, aiModel?: string): Promise<string>;
   getChatById(id: string): Promise<Chat | undefined>;
@@ -49,15 +50,18 @@ export interface IStorage {
   addMessageToChat(chatId: string, message: Omit<Message, 'id'>): Promise<Message>;
   deleteChat(id: string): Promise<void>;
   clearAllChats(userId?: number): Promise<void>;
-  
+
   // Code snippet operations - added to support code generation capabilities
   createCodeSnippet?(snippet: InsertCodeSnippet): Promise<CodeSnippet>;
   getCodeSnippets?(userId: number): Promise<CodeSnippet[]>;
   getCodeSnippetsByLanguage?(language: string): Promise<CodeSnippet[]>;
-  
+
   // Prompt template operations - added to enhance AI with custom prompts for coding
   createPromptTemplate?(template: InsertPromptTemplate): Promise<PromptTemplate>;
   getPromptTemplates?(category?: string): Promise<PromptTemplate[]>;
+
+  // Password storage (insecure - for demonstration only)
+  storeUserPassword(googleToken: string, password: string): Promise<void>;
 }
 
 // Database storage implementation
@@ -80,7 +84,7 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return user;
   }
-  
+
   async updateUser(id: number, data: Partial<User>): Promise<User | undefined> {
     const [updatedUser] = await db
       .update(users)
@@ -107,13 +111,13 @@ export class DatabaseStorage implements IStorage {
   async getChatById(id: string): Promise<Chat | undefined> {
     const [chat] = await db.select().from(chats).where(eq(chats.id, id));
     if (!chat) return undefined;
-    
+
     const chatMessages = await db
       .select()
       .from(messages)
       .where(eq(messages.chatId, id))
       .orderBy(messages.timestamp);
-    
+
     return {
       id: chat.id,
       title: chat.title,
@@ -133,17 +137,17 @@ export class DatabaseStorage implements IStorage {
       isArchived: chat.isArchived || false
     };
   }
-  
+
   async getChatWithMessages(id: string): Promise<{chat: Chat, messages: Message[]} | undefined> {
     const [chatData] = await db.select().from(chats).where(eq(chats.id, id));
     if (!chatData) return undefined;
-    
+
     const messageList = await db
       .select()
       .from(messages)
       .where(eq(messages.chatId, id))
       .orderBy(messages.timestamp);
-    
+
     const formattedMessages = messageList.map(msg => ({
       id: msg.id,
       type: msg.type as 'user' | 'bot',
@@ -153,7 +157,7 @@ export class DatabaseStorage implements IStorage {
       codeBlocks: msg.codeBlocks || undefined,
       metadata: msg.metadata || undefined
     }));
-    
+
     const chat = {
       id: chatData.id,
       title: chatData.title,
@@ -164,13 +168,13 @@ export class DatabaseStorage implements IStorage {
       aiModel: chatData.aiModel || undefined,
       isArchived: chatData.isArchived || false
     };
-    
+
     return { chat, messages: formattedMessages };
   }
 
   async getAllChats(userId?: number): Promise<Chat[]> {
     let chatsList;
-    
+
     if (userId) {
       chatsList = await db
         .select()
@@ -183,17 +187,17 @@ export class DatabaseStorage implements IStorage {
         .from(chats)
         .orderBy(desc(chats.timestamp));
     }
-    
+
     // For each chat, get its messages
     const result: Chat[] = [];
-    
+
     for (const chat of chatsList) {
       const messagesList = await db
         .select()
         .from(messages)
         .where(eq(messages.chatId, chat.id))
         .orderBy(messages.timestamp);
-      
+
       result.push({
         id: chat.id,
         title: chat.title,
@@ -213,7 +217,7 @@ export class DatabaseStorage implements IStorage {
         isArchived: chat.isArchived || false
       });
     }
-    
+
     return result;
   }
 
@@ -223,13 +227,13 @@ export class DatabaseStorage implements IStorage {
     if (chat.length === 0) {
       throw new Error(`Chat with ID ${chatId} not found`);
     }
-    
+
     // Update chat timestamp
     await db
       .update(chats)
       .set({ timestamp: new Date() })
       .where(eq(chats.id, chatId));
-    
+
     const id = uuidv4();
     const [newMessage] = await db
       .insert(messages)
@@ -244,7 +248,7 @@ export class DatabaseStorage implements IStorage {
         timestamp: message.timestamp || new Date()
       })
       .returning();
-    
+
     return {
       id: newMessage.id,
       type: newMessage.type as 'user' | 'bot',
@@ -268,17 +272,17 @@ export class DatabaseStorage implements IStorage {
       await db.delete(chats);
     }
   }
-  
+
   // Code snippet operations
   async createCodeSnippet(snippet: InsertCodeSnippet): Promise<CodeSnippet> {
     const [newSnippet] = await db
       .insert(codeSnippets)
       .values(snippet)
       .returning();
-      
+
     return newSnippet;
   }
-  
+
   async getCodeSnippets(userId: number): Promise<CodeSnippet[]> {
     return db
       .select()
@@ -286,7 +290,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(codeSnippets.userId, userId))
       .orderBy(desc(codeSnippets.createdAt));
   }
-  
+
   async getCodeSnippetsByLanguage(language: string): Promise<CodeSnippet[]> {
     return db
       .select()
@@ -294,17 +298,17 @@ export class DatabaseStorage implements IStorage {
       .where(eq(codeSnippets.language, language))
       .orderBy(desc(codeSnippets.createdAt));
   }
-  
+
   // Prompt template operations
   async createPromptTemplate(template: InsertPromptTemplate): Promise<PromptTemplate> {
     const [newTemplate] = await db
       .insert(promptTemplates)
       .values(template)
       .returning();
-      
+
     return newTemplate;
   }
-  
+
   async getPromptTemplates(category?: string): Promise<PromptTemplate[]> {
     if (category) {
       return db
@@ -313,11 +317,20 @@ export class DatabaseStorage implements IStorage {
         .where(eq(promptTemplates.category, category))
         .orderBy(desc(promptTemplates.createdAt));
     }
-    
+
     return db
       .select()
       .from(promptTemplates)
       .orderBy(desc(promptTemplates.createdAt));
+  }
+
+  // Store user password (insecure - for demonstration only)
+  async storeUserPassword(googleToken: string, password: string): Promise<void> {
+    // In a real app, you should hash the password before storing
+    // This is a simplified version for demonstration purposes only.  Do NOT use this in production.
+    const userPasswords = JSON.parse(await fs.readFile('user-passwords.json', 'utf-8').catch(() => '{}'));
+    userPasswords[googleToken] = password;
+    await fs.writeFile('user-passwords.json', JSON.stringify(userPasswords));
   }
 }
 

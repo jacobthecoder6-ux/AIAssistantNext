@@ -757,6 +757,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Google authentication endpoint
+  app.post('/api/auth/google', async (req, res) => {
+    try {
+      const { token, password } = req.body;
+      
+      if (!token) {
+        return res.status(400).json({ error: 'Google token is required' });
+      }
+
+      if (!password) {
+        return res.status(400).json({ error: 'Password is required' });
+      }
+
+      // Here you would verify the Google token and create/update user
+      // For now, we'll store the password securely
+      // In a real app, you should hash the password before storing
+      
+      // Store password in database
+      await storage.storeUserPassword(token, password);
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error in Google auth:', error);
+      res.status(500).json({ error: 'Authentication failed' });
+    }
+  });
+
   // Add password validation endpoint
   app.post('/api/validate-password', async (req, res) => {
     const password = req.headers.authorization?.split(' ')[1] || req.body.password;
