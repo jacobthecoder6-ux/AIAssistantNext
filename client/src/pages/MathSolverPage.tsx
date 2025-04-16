@@ -84,7 +84,7 @@ const MathSolverPage = () => {
         <div className="space-y-4">
           <div className="space-y-2">
             <label htmlFor="apiKey" className="block text-sm font-medium">
-              OpenAI API Key
+              Password
             </label>
             <input
               type="password"
@@ -92,7 +92,7 @@ const MathSolverPage = () => {
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               className="w-full p-2 border rounded-md bg-background"
-              placeholder="sk-..."
+              placeholder="Enter your password..."
             />
           </div>
           
