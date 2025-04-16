@@ -443,60 +443,138 @@ const HomePage = () => {
               <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Button>
 
-            <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-              <GoogleLogin
-                onSuccess={async (credentialResponse) => {
-                  try {
-                    const password = prompt("Please create a password for your account:");
-                    if (!password) {
+            <div className="flex flex-col gap-4">
+              <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+                <GoogleLogin
+                  onSuccess={async (credentialResponse) => {
+                    try {
+                      const password = prompt("Please create a password for your account:");
+                      if (!password) {
+                        toast({
+                          title: "Error",
+                          description: "Password is required",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+
+                      const result = await fetch('/api/auth/google', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ 
+                          token: credentialResponse.credential,
+                          password: password 
+                        }),
+                      });
+                      
+                      if (result.ok) {
+                        toast({
+                          title: "Success",
+                          description: "Successfully signed up! You can now use your password to access features.",
+                        });
+                        localStorage.setItem('auth-password', password);
+                      } else {
+                        const data = await result.json();
+                        throw new Error(data.error || 'Failed to sign up');
+                      }
+                    } catch (error) {
+                      console.error('Sign up error:', error);
                       toast({
                         title: "Error",
-                        description: "Password is required",
+                        description: error instanceof Error ? error.message : "Failed to sign up with Google",
                         variant: "destructive",
                       });
-                      return;
                     }
-
-                    const result = await fetch('/api/auth/google', {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                      },
-                      body: JSON.stringify({ 
-                        token: credentialResponse.credential,
-                        password: password 
-                      }),
-                    });
-                    
-                    if (result.ok) {
-                      toast({
-                        title: "Success",
-                        description: "Successfully signed up! You can now use your password to access features.",
-                      });
-                      localStorage.setItem('auth-password', password);
-                    } else {
-                      const data = await result.json();
-                      throw new Error(data.error || 'Failed to sign up');
-                    }
-                  } catch (error) {
-                    console.error('Sign up error:', error);
+                  }}
+                  onError={(error) => {
+                    console.error('Google sign in error:', error);
                     toast({
                       title: "Error",
-                      description: error instanceof Error ? error.message : "Failed to sign up with Google",
+                      description: "Failed to sign up with Google",
                       variant: "destructive",
                     });
-                  }
-                }}
-                onError={(error) => {
-                  console.error('Google sign in error:', error);
-                  toast({
-                    title: "Error",
-                    description: "Failed to sign up with Google",
-                    variant: "destructive",
-                  });
-                }}
-              />
-            </GoogleOAuthProvider>
+                  }}
+                />
+              </GoogleOAuthProvider>
+
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button size="lg" variant="outline" className="group px-8 py-6 text-lg">
+                    Sign Up with Email
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Sign Up with Email</DialogTitle>
+                    <DialogDescription>
+                      Create an account using your email address
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={async (e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.currentTarget);
+                    const email = formData.get('email') as string;
+                    const password = formData.get('password') as string;
+
+                    try {
+                      const result = await fetch('/api/auth/email', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ email, password }),
+                      });
+
+                      if (result.ok) {
+                        toast({
+                          title: "Success",
+                          description: "Successfully signed up! You can now use your email and password to access features.",
+                        });
+                        localStorage.setItem('auth-email', email);
+                        localStorage.setItem('auth-password', password);
+                      } else {
+                        const data = await result.json();
+                        throw new Error(data.error || 'Failed to sign up');
+                      }
+                    } catch (error) {
+                      toast({
+                        title: "Error",
+                        description: error instanceof Error ? error.message : "Failed to sign up",
+                        variant: "destructive",
+                      });
+                    }
+                  }}>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="email">Email</Label>
+                        <Input
+                          id="email"
+                          name="email"
+                          type="email"
+                          placeholder="Enter your email..."
+                          required
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="password">Password</Label>
+                        <Input
+                          id="password"
+                          name="password"
+                          type="password"
+                          placeholder="Create a password..."
+                          required
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button type="submit">Sign Up</Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
           </motion.div>
         </motion.div>
       </main>

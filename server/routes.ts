@@ -757,6 +757,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Email authentication endpoint
+  app.post('/api/auth/email', async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ error: 'Email and password are required' });
+      }
+
+      // Store the email and password
+      await storage.storeUserPassword(email, password);
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error in email auth:', error);
+      res.status(500).json({ error: 'Authentication failed' });
+    }
+  });
+
   // Google authentication endpoint
   app.post('/api/auth/google', async (req, res) => {
     try {
