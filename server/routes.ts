@@ -16,12 +16,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Message is required' });
       }
 
-      if (!req.body.password) {
+      const password = req.headers.authorization?.split(' ')[1] || req.body.password;
+
+      if (!password) {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      // Validate password (you should implement proper password validation)
-      if (req.body.password !== process.env.APP_PASSWORD) {
+      if (password !== process.env.APP_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
 
@@ -87,12 +88,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Text is required' });
       }
 
-      if (!req.body.password) {
+      const password = req.headers.authorization?.split(' ')[1] || req.body.password;
+
+      if (!password) {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      // Validate password (you should implement proper password validation)
-      if (req.body.password !== process.env.APP_PASSWORD) {
+      if (password !== process.env.APP_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
 
@@ -135,12 +137,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { title = 'New Conversation' } = req.body;
 
-      if (!req.body.password) {
+      const password = req.headers.authorization?.split(' ')[1] || req.body.password;
+
+      if (!password) {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      // Validate password (you should implement proper password validation)
-      if (req.body.password !== process.env.APP_PASSWORD) {
+      if (password !== process.env.APP_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
 
@@ -156,12 +159,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get chat history endpoint
   app.get('/api/chats', async (req, res) => {
     try {
-      if (!req.body.password) {
+      const password = req.headers.authorization?.split(' ')[1] || req.body.password;
+
+      if (!password) {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      // Validate password (you should implement proper password validation)
-      if (req.body.password !== process.env.APP_PASSWORD) {
+      if (password !== process.env.APP_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
       const chats = await storage.getAllChats();
@@ -176,12 +180,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get chat by ID endpoint
   app.get('/api/chats/:id', async (req, res) => {
     try {
-      if (!req.body.password) {
+      const password = req.headers.authorization?.split(' ')[1] || req.body.password;
+
+      if (!password) {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      // Validate password (you should implement proper password validation)
-      if (req.body.password !== process.env.APP_PASSWORD) {
+      if (password !== process.env.APP_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
       const chat = await storage.getChatById(req.params.id);
@@ -200,12 +205,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delete chat endpoint
   app.delete('/api/chats/:id', async (req, res) => {
     try {
-      if (!req.body.password) {
+      const password = req.headers.authorization?.split(' ')[1] || req.body.password;
+
+      if (!password) {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      // Validate password (you should implement proper password validation)
-      if (req.body.password !== process.env.APP_PASSWORD) {
+      if (password !== process.env.APP_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
       await storage.deleteChat(req.params.id);
@@ -220,12 +226,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Clear all chats endpoint
   app.delete('/api/chats', async (req, res) => {
     try {
-      if (!req.body.password) {
+      const password = req.headers.authorization?.split(' ')[1] || req.body.password;
+
+      if (!password) {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      // Validate password (you should implement proper password validation)
-      if (req.body.password !== process.env.APP_PASSWORD) {
+      if (password !== process.env.APP_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
       await storage.clearAllChats();
@@ -240,18 +247,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Image generation endpoint
   app.post('/api/generate-image', async (req, res) => {
     try {
-      const { prompt, size = '1024x1024 } = req.body;
+      const { prompt, size = '1024x1024' } = req.body;
 
       if (!prompt) {
         return res.status(400).json({ error: 'Prompt is required' });
       }
 
-      if (!req.body.password) {
+      const password = req.headers.authorization?.split(' ')[1] || req.body.password;
+
+      if (!password) {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      // Validate password (you should implement proper password validation)
-      if (req.body.password !== process.env.APP_PASSWORD) {
+      if (password !== process.env.APP_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
 
@@ -276,12 +284,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Code is required' });
       }
 
-      if (!req.body.password) {
+      const password = req.headers.authorization?.split(' ')[1] || req.body.password;
+
+      if (!password) {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      // Validate password (you should implement proper password validation)
-      if (req.body.password !== process.env.APP_PASSWORD) {
+      if (password !== process.env.APP_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
 
@@ -334,12 +343,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Math problem is required' });
       }
 
-      if (!req.body.password) {
+      const password = req.headers.authorization?.split(' ')[1] || req.body.password;
+
+      if (!password) {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      // Validate password (you should implement proper password validation)
-      if (req.body.password !== process.env.APP_PASSWORD) {
+      if (password !== process.env.APP_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
 
@@ -379,12 +389,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'UserId, code, and language are required' });
       }
 
-      if (!req.body.password) {
+      const password = req.headers.authorization?.split(' ')[1] || req.body.password;
+
+      if (!password) {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      // Validate password (you should implement proper password validation)
-      if (req.body.password !== process.env.APP_PASSWORD) {
+      if (password !== process.env.APP_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
 
@@ -413,12 +424,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Either userId or language is required' });
       }
 
-      if (!req.body.password) {
+      const password = req.headers.authorization?.split(' ')[1] || req.body.password;
+
+      if (!password) {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      // Validate password (you should implement proper password validation)
-      if (req.body.password !== process.env.APP_PASSWORD) {
+      if (password !== process.env.APP_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
 
@@ -454,12 +466,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Name and systemPrompt are required' });
       }
 
-      if (!req.body.password) {
+      const password = req.headers.authorization?.split(' ')[1] || req.body.password;
+
+      if (!password) {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      // Validate password (you should implement proper password validation)
-      if (req.body.password !== process.env.APP_PASSWORD) {
+      if (password !== process.env.APP_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
 
@@ -486,12 +499,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get specialized chatbot
   app.get('/api/chatbots/:id', async (req, res) => {
     try {
-      if (!req.body.password) {
+      const password = req.headers.authorization?.split(' ')[1] || req.body.password;
+
+      if (!password) {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      // Validate password (you should implement proper password validation)
-      if (req.body.password !== process.env.APP_PASSWORD) {
+      if (password !== process.env.APP_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
       const chatbot = await storage.getSpecializedChatbotById(req.params.id);
@@ -510,12 +524,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // List all specialized chatbots
   app.get('/api/chatbots', async (req, res) => {
     try {
-      if (!req.body.password) {
+      const password = req.headers.authorization?.split(' ')[1] || req.body.password;
+
+      if (!password) {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      // Validate password (you should implement proper password validation)
-      if (req.body.password !== process.env.APP_PASSWORD) {
+      if (password !== process.env.APP_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
       const chatbots = await storage.getAllSpecializedChatbots();
@@ -535,12 +550,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Message is required' });
       }
 
-      if (!req.body.password) {
+      const password = req.headers.authorization?.split(' ')[1] || req.body.password;
+
+      if (!password) {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      // Validate password (you should implement proper password validation)
-      if (req.body.password !== process.env.APP_PASSWORD) {
+      if (password !== process.env.APP_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
 
@@ -596,12 +612,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Export project code endpoint
   app.get('/api/export-code', async (req, res) => {
     try {
-      if (!req.body.password) {
+      const password = req.headers.authorization?.split(' ')[1] || req.body.password;
+
+      if (!password) {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      // Validate password (you should implement proper password validation)
-      if (req.body.password !== process.env.APP_PASSWORD) {
+      if (password !== process.env.APP_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
       // Create a structured representation of the project files and their contents
