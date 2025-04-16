@@ -40,14 +40,15 @@ const HomePage = () => {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [isSignedIn, setIsSignedIn] = useState(false);
 
-  // Check if user is already signed in
+  // Clear auth state and check if user is already signed in
   useEffect(() => {
-    const savedPassword = localStorage.getItem('auth-password');
-    if (savedPassword) {
-      setIsSignedIn(true);
-      setPassword(savedPassword);
-      setIsUnlocked(true);
-    }
+    // Clear all auth-related items
+    localStorage.removeItem('auth-password');
+    localStorage.removeItem('auth-email');
+    localStorage.removeItem('is-unlocked');
+    setIsSignedIn(false);
+    setPassword('');
+    setIsUnlocked(false);
   }, []);
   const [openaiApiKey, setOpenaiApiKey] = useState('');
   const [anthropicApiKey, setAnthropicApiKey] = useState('');
