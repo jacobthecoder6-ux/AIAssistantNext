@@ -85,7 +85,7 @@ const HomePage = () => {
       setShowApiKeyInputs(true);
       return;
     }
-    
+
     if (aiProvider === 'anthropic' && !anthropicApiKey) {
       toast({
         title: "Anthropic API Key Required",
@@ -95,17 +95,17 @@ const HomePage = () => {
       setShowApiKeyInputs(true);
       return;
     }
-    
+
     // Store preferences and API keys
     localStorage.setItem('preferred-language', selectedLanguage);
     localStorage.setItem('preferred-model', selectedModel);
     localStorage.setItem('preferred-anthropic-model', anthropicModel);
     localStorage.setItem('preferred-ai-provider', aiProvider);
-    
+
     if (openaiApiKey) {
       localStorage.setItem('api-key', openaiApiKey);
     }
-    
+
     if (anthropicApiKey) {
       localStorage.setItem('anthropic-api-key', anthropicApiKey);
     }
@@ -118,21 +118,21 @@ const HomePage = () => {
   useEffect(() => {
     const storedLanguage = localStorage.getItem('preferred-language');
     if (storedLanguage) setSelectedLanguage(storedLanguage);
-    
+
     const storedModel = localStorage.getItem('preferred-model');
     if (storedModel) setSelectedModel(storedModel);
-    
+
     const storedAnthropicModel = localStorage.getItem('preferred-anthropic-model');
     if (storedAnthropicModel) setAnthropicModel(storedAnthropicModel);
-    
+
     const storedProvider = localStorage.getItem('preferred-ai-provider');
     if (storedProvider && (storedProvider === 'openai' || storedProvider === 'anthropic')) {
       setAiProvider(storedProvider as 'openai' | 'anthropic');
     }
-    
+
     const storedOpenAIKey = localStorage.getItem('api-key');
     if (storedOpenAIKey) setOpenaiApiKey(storedOpenAIKey);
-    
+
     const storedAnthropicKey = localStorage.getItem('anthropic-api-key');
     if (storedAnthropicKey) setAnthropicApiKey(storedAnthropicKey);
   }, []);
@@ -141,7 +141,7 @@ const HomePage = () => {
   const setAppTheme = (newTheme: 'light' | 'dark' | 'system') => {
     setTheme(newTheme);
     localStorage.setItem('preferred-theme', newTheme);
-    
+
     if (newTheme === 'dark' || (newTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
       document.documentElement.classList.add('dark');
     } else {
@@ -168,7 +168,7 @@ const HomePage = () => {
               <span className="font-bold text-xl">UnlockedAI v1</span>
             </Link>
           </div>
-          
+
           <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
             <div className="w-full flex-1 md:w-auto md:flex-none">
               {/* Password Dialog */}
@@ -209,7 +209,7 @@ const HomePage = () => {
                             },
                             body: JSON.stringify({ password }),
                           });
-                          
+
                           if (response.ok) {
                             setIsUnlocked(true);
                             localStorage.setItem('is-unlocked', 'true');
@@ -236,7 +236,7 @@ const HomePage = () => {
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
-              
+
               {/* Theme Selector */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -266,7 +266,7 @@ const HomePage = () => {
           </div>
         </div>
       </header>
-    
+
       {/* Main Content */}
       <main className="flex-grow flex items-center justify-center p-4">
         <motion.div 
@@ -294,7 +294,7 @@ const HomePage = () => {
                   <Brain className="w-6 h-6 text-blue-500 mr-2" />
                   <h2 className="text-xl font-semibold dark:text-white">Choose Your AI</h2>
                 </div>
-                
+
                 <div className="space-y-4">
                   <div className="flex flex-col space-y-2">
                     <label className="font-medium text-sm dark:text-gray-200">AI Provider</label>
@@ -371,7 +371,7 @@ const HomePage = () => {
                   <Globe className="w-6 h-6 text-green-500 mr-2" />
                   <h2 className="text-xl font-semibold dark:text-white">Choose Your Language</h2>
                 </div>
-                
+
                 <div className="space-y-4">
                   <p className="text-sm text-gray-600 dark:text-gray-300">
                     Our AI understands and responds in multiple languages. Select your preferred language:
@@ -401,7 +401,7 @@ const HomePage = () => {
                   <Sparkles className="w-6 h-6 text-purple-500 mr-2" />
                   <h2 className="text-xl font-semibold dark:text-white">Key Features</h2>
                 </div>
-                
+
                 <ul className="space-y-3">
                   <li className="flex items-start">
                     <Check className="w-5 h-5 text-green-500 mr-2 mt-0.5" />
@@ -444,59 +444,63 @@ const HomePage = () => {
             </Button>
 
             <div className="flex flex-col gap-4">
-              <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-                <GoogleLogin
-                  onSuccess={async (credentialResponse) => {
-                    try {
-                      const password = prompt("Please create a password for your account:");
-                      if (!password) {
+              <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ''}>
+                {import.meta.env.VITE_GOOGLE_CLIENT_ID ? (
+                  <GoogleLogin
+                    onSuccess={async (credentialResponse) => {
+                      try {
+                        const password = prompt("Please create a password for your account:");
+                        if (!password) {
+                          toast({
+                            title: "Error",
+                            description: "Password is required",
+                            variant: "destructive",
+                          });
+                          return;
+                        }
+
+                        const result = await fetch('/api/auth/google', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify({ 
+                            token: credentialResponse.credential,
+                            password: password 
+                          }),
+                        });
+
+                        if (result.ok) {
+                          toast({
+                            title: "Success",
+                            description: "Successfully signed up! You can now use your password to access features.",
+                          });
+                          localStorage.setItem('auth-password', password);
+                        } else {
+                          const data = await result.json();
+                          throw new Error(data.error || 'Failed to sign up');
+                        }
+                      } catch (error) {
+                        console.error('Sign up error:', error);
                         toast({
                           title: "Error",
-                          description: "Password is required",
+                          description: error instanceof Error ? error.message : "Failed to sign up with Google",
                           variant: "destructive",
                         });
-                        return;
                       }
-
-                      const result = await fetch('/api/auth/google', {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ 
-                          token: credentialResponse.credential,
-                          password: password 
-                        }),
-                      });
-                      
-                      if (result.ok) {
-                        toast({
-                          title: "Success",
-                          description: "Successfully signed up! You can now use your password to access features.",
-                        });
-                        localStorage.setItem('auth-password', password);
-                      } else {
-                        const data = await result.json();
-                        throw new Error(data.error || 'Failed to sign up');
-                      }
-                    } catch (error) {
-                      console.error('Sign up error:', error);
+                    }}
+                    onError={(error) => {
+                      console.error('Google sign in error:', error);
                       toast({
                         title: "Error",
-                        description: error instanceof Error ? error.message : "Failed to sign up with Google",
+                        description: "Failed to sign up with Google",
                         variant: "destructive",
                       });
-                    }
-                  }}
-                  onError={(error) => {
-                    console.error('Google sign in error:', error);
-                    toast({
-                      title: "Error",
-                      description: "Failed to sign up with Google",
-                      variant: "destructive",
-                    });
-                  }}
-                />
+                    }}
+                  />
+                ) : (
+                  <p>Google Sign-in not configured.</p>
+                )}
               </GoogleOAuthProvider>
 
               <Dialog>
