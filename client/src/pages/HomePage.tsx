@@ -64,6 +64,16 @@ const HomePage = () => {
   };
 
   // Function to validate and start chat
+  useEffect(() => {
+    if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
+      toast({
+        title: "Configuration Error",
+        description: "Google OAuth client ID is not configured. Please contact the administrator.",
+        variant: "destructive"
+      });
+    }
+  }, []);
+
   const startChat = () => {
     // Validate API key is provided based on selected provider
     if (aiProvider === 'openai' && !openaiApiKey) {
@@ -433,7 +443,7 @@ const HomePage = () => {
               <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Button>
 
-            <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ''}>
+            <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
               <GoogleLogin
                 onSuccess={async (credentialResponse) => {
                   try {
