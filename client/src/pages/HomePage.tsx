@@ -154,7 +154,7 @@ const HomePage = () => {
           <div className="mr-4 flex">
             <Link href="/" className="flex items-center">
               <Brain className="h-6 w-6 text-blue-600 mr-2" />
-              <span className="font-bold text-xl">UltimateChatbot</span>
+              <span className="font-bold text-xl">UnlockedAI v1</span>
             </Link>
           </div>
           

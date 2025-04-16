@@ -20,7 +20,7 @@ const ChatHeader: FC<ChatHeaderProps> = ({
         >
           <i className="fas fa-bars"></i>
         </button>
-        <h2 className="font-semibold">AI Chat Assistant</h2>
+        <h2 className="font-semibold">UnlockedAI v1</h2>
       </div>
       <div className="flex items-center space-x-2">
         {showNewChatButton && (
