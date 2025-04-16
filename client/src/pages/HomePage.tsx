@@ -39,15 +39,6 @@ const HomePage = () => {
   const [password, setPassword] = useState('');
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [isSignedIn, setIsSignedIn] = useState(false);
-  const [openaiApiKey, setOpenaiApiKey] = useState('');
-  const [anthropicApiKey, setAnthropicApiKey] = useState('');
-  const [aiProvider, setAiProvider] = useState('openai');
-  const [selectedLanguage, setSelectedLanguage] = useState('en');
-  const [selectedModel, setSelectedModel] = useState('gpt-4');
-  const [anthropicModel, setAnthropicModel] = useState('claude-2');
-  const [showApiKeyInputs, setShowApiKeyInputs] = useState(false);
-  const [openaiApiKey, setOpenaiApiKey] = useState('');
-  const [anthropicApiKey, setAnthropicApiKey] = useState('');
 
   // Check if user is already signed in
   useEffect(() => {
