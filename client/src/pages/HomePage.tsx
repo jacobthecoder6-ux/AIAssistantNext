@@ -37,6 +37,8 @@ const HomePage = () => {
   const [aiProvider, setAiProvider] = useState<'openai' | 'anthropic'>('openai');
   const [password, setPassword] = useState('');
   const [isUnlocked, setIsUnlocked] = useState(false);
+  const [openaiApiKey, setOpenaiApiKey] = useState('');
+  const [anthropicApiKey, setAnthropicApiKey] = useState('');
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('light');
 
@@ -187,14 +189,37 @@ const HomePage = () => {
                   </div>
                   <DialogFooter>
                     <DialogClose asChild>
-                      <Button type="submit" onClick={() => {
-                        // Here you would typically validate the password with your backend
-                        setIsUnlocked(true);
-                        localStorage.setItem('is-unlocked', 'true');
-                        toast({
-                          title: "Features Unlocked",
-                          description: "You now have access to all features."
-                        });
+                      <Button type="submit" onClick={async () => {
+                        try {
+                          const response = await fetch('/api/validate-password', {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ password }),
+                          });
+                          
+                          if (response.ok) {
+                            setIsUnlocked(true);
+                            localStorage.setItem('is-unlocked', 'true');
+                            toast({
+                              title: "Features Unlocked",
+                              description: "You now have access to all features."
+                            });
+                          } else {
+                            toast({
+                              title: "Error",
+                              description: "Invalid password",
+                              variant: "destructive"
+                            });
+                          }
+                        } catch (error) {
+                          toast({
+                            title: "Error",
+                            description: "Failed to validate password",
+                            variant: "destructive"
+                          });
+                        }
                       }}>Unlock</Button>
                     </DialogClose>
                   </DialogFooter>

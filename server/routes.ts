@@ -22,9 +22,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      if (password !== process.env.APP_PASSWORD) {
+      // Replace this with your actual password
+      const VALID_PASSWORD = "your-secure-password";
+
+      if (password !== VALID_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
+
 
       // Get chat history from memory storage
       let chatHistory: Array<{role: string, content: string}> = [];
@@ -94,7 +98,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      if (password !== process.env.APP_PASSWORD) {
+      // Replace this with your actual password
+      const VALID_PASSWORD = "your-secure-password";
+
+      if (password !== VALID_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
 
@@ -143,7 +150,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      if (password !== process.env.APP_PASSWORD) {
+      // Replace this with your actual password
+      const VALID_PASSWORD = "your-secure-password";
+
+      if (password !== VALID_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
 
@@ -165,7 +175,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      if (password !== process.env.APP_PASSWORD) {
+      // Replace this with your actual password
+      const VALID_PASSWORD = "your-secure-password";
+
+      if (password !== VALID_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
       const chats = await storage.getAllChats();
@@ -186,7 +199,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      if (password !== process.env.APP_PASSWORD) {
+      // Replace this with your actual password
+      const VALID_PASSWORD = "your-secure-password";
+
+      if (password !== VALID_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
       const chat = await storage.getChatById(req.params.id);
@@ -211,7 +227,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      if (password !== process.env.APP_PASSWORD) {
+      // Replace this with your actual password
+      const VALID_PASSWORD = "your-secure-password";
+
+      if (password !== VALID_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
       await storage.deleteChat(req.params.id);
@@ -232,7 +251,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      if (password !== process.env.APP_PASSWORD) {
+      // Replace this with your actual password
+      const VALID_PASSWORD = "your-secure-password";
+
+      if (password !== VALID_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
       await storage.clearAllChats();
@@ -259,7 +281,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      if (password !== process.env.APP_PASSWORD) {
+      // Replace this with your actual password
+      const VALID_PASSWORD = "your-secure-password";
+
+      if (password !== VALID_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
 
@@ -290,7 +315,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      if (password !== process.env.APP_PASSWORD) {
+      // Replace this with your actual password
+      const VALID_PASSWORD = "your-secure-password";
+
+      if (password !== VALID_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
 
@@ -349,7 +377,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      if (password !== process.env.APP_PASSWORD) {
+      // Replace this with your actual password
+      const VALID_PASSWORD = "your-secure-password";
+
+      if (password !== VALID_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
 
@@ -395,7 +426,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      if (password !== process.env.APP_PASSWORD) {
+      // Replace this with your actual password
+      const VALID_PASSWORD = "your-secure-password";
+
+      if (password !== VALID_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
 
@@ -430,7 +464,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      if (password !== process.env.APP_PASSWORD) {
+      // Replace this with your actual password
+      const VALID_PASSWORD = "your-secure-password";
+
+      if (password !== VALID_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
 
@@ -472,7 +509,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      if (password !== process.env.APP_PASSWORD) {
+      // Replace this with your actual password
+      const VALID_PASSWORD = "your-secure-password";
+
+      if (password !== VALID_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
 
@@ -505,7 +545,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      if (password !== process.env.APP_PASSWORD) {
+      // Replace this with your actual password
+      const VALID_PASSWORD = "your-secure-password";
+
+      if (password !== VALID_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
       const chatbot = await storage.getSpecializedChatbotById(req.params.id);
@@ -530,7 +573,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      if (password !== process.env.APP_PASSWORD) {
+      // Replace this with your actual password
+      const VALID_PASSWORD = "your-secure-password";
+
+      if (password !== VALID_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
       const chatbots = await storage.getAllSpecializedChatbots();
@@ -556,7 +602,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      if (password !== process.env.APP_PASSWORD) {
+      // Replace this with your actual password
+      const VALID_PASSWORD = "your-secure-password";
+
+      if (password !== VALID_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
 
@@ -618,7 +667,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
-      if (password !== process.env.APP_PASSWORD) {
+      // Replace this with your actual password
+      const VALID_PASSWORD = "your-secure-password";
+
+      if (password !== VALID_PASSWORD) {
         return res.status(401).json({ error: 'Invalid password' });
       }
       // Create a structured representation of the project files and their contents
@@ -704,6 +756,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: 'Failed to export project code' });
     }
   });
+
+  // Add password validation endpoint
+  app.post('/api/validate-password', async (req, res) => {
+    const password = req.headers.authorization?.split(' ')[1] || req.body.password;
+
+    if (!password) {
+      return res.status(400).json({ error: 'Password is required' });
+    }
+
+    // Replace this with your actual password
+    const VALID_PASSWORD = "your-secure-password";
+
+    if (password === VALID_PASSWORD) {
+      return res.json({ success: true });
+    } else {
+      return res.status(401).json({ error: 'Invalid password' });
+    }
+  });
+
 
   const httpServer = createServer(app);
   return httpServer;
