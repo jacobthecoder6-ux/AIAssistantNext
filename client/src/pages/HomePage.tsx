@@ -457,62 +457,60 @@ const HomePage = () => {
             {!isSignedIn && (
               <div className="flex flex-col gap-4">
               <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ''}>
-                {import.meta.env.VITE_GOOGLE_CLIENT_ID ? (
-                  <GoogleLogin
-                    onSuccess={async (credentialResponse) => {
-                      try {
-                        const password = prompt("Please create a password for your account:");
-                        if (!password) {
-                          toast({
-                            title: "Error",
-                            description: "Password is required",
-                            variant: "destructive",
-                          });
-                          return;
-                        }
-
-                        const result = await fetch('/api/auth/google', {
-                          method: 'POST',
-                          headers: {
-                            'Content-Type': 'application/json',
-                          },
-                          body: JSON.stringify({ 
-                            token: credentialResponse.credential,
-                            password: password 
-                          }),
-                        });
-
-                        if (result.ok) {
-                          toast({
-                            title: "Success",
-                            description: "Successfully signed up! You can now use your password to access features.",
-                          });
-                          localStorage.setItem('auth-password', password);
-                        } else {
-                          const data = await result.json();
-                          throw new Error(data.error || 'Failed to sign up');
-                        }
-                      } catch (error) {
-                        console.error('Sign up error:', error);
+                <GoogleLogin
+                  useOneTap
+                  onSuccess={async (credentialResponse) => {
+                    try {
+                      const password = prompt("Please create a password for your account:");
+                      if (!password) {
                         toast({
                           title: "Error",
-                          description: error instanceof Error ? error.message : "Failed to sign up with Google",
+                          description: "Password is required",
                           variant: "destructive",
                         });
+                        return;
                       }
-                    }}
-                    onError={(error) => {
-                      console.error('Google sign in error:', error);
+
+                      const result = await fetch('/api/auth/google', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ 
+                          token: credentialResponse.credential,
+                          password: password 
+                        }),
+                      });
+
+                      if (result.ok) {
+                        toast({
+                          title: "Success",
+                          description: "Successfully signed in with Google!",
+                        });
+                        setIsSignedIn(true);
+                        localStorage.setItem('auth-password', password);
+                      } else {
+                        const data = await result.json();
+                        throw new Error(data.error || 'Failed to sign in');
+                      }
+                    } catch (error) {
+                      console.error('Sign in error:', error);
                       toast({
                         title: "Error",
-                        description: "Failed to sign up with Google",
+                        description: error instanceof Error ? error.message : "Failed to sign in with Google",
                         variant: "destructive",
                       });
-                    }}
-                  />
-                ) : (
-                  <p>Google Sign-in not configured.</p>
-                )}
+                    }
+                  }}
+                  onError={(error) => {
+                    console.error('Google sign in error:', error);
+                    toast({
+                      title: "Error",
+                      description: "Failed to sign in with Google",
+                      variant: "destructive",
+                    });
+                  }}
+                />
               </GoogleOAuthProvider>
 
               <Dialog>
