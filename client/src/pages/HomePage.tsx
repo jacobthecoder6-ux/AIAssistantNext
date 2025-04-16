@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'wouter';
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -432,51 +433,42 @@ const HomePage = () => {
               <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Button>
 
-            <GoogleLogin
-              clientId={process.env.GOOGLE_CLIENT_ID || ''}
-              render={renderProps => (
-                <Button 
-                  onClick={renderProps.onClick}
-                  size="lg"
-                  className="group px-8 py-6 text-lg bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                >
-                  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5 mr-2" />
-                  Sign Up with Google
-                </Button>
-              )}
-              onSuccess={async (response) => {
-                try {
-                  const result = await fetch('/api/auth/google', {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ token: response.credential }),
-                  });
-                  
-                  if (result.ok) {
-                    toast({
-                      title: "Success",
-                      description: "Successfully signed up! You can now set your password.",
+            <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ''}>
+              <GoogleLogin
+                onSuccess={async (credentialResponse) => {
+                  try {
+                    const result = await fetch('/api/auth/google', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({ token: credentialResponse.credential }),
                     });
-                    setShowPasswordDialog(true);
+                    
+                    if (result.ok) {
+                      toast({
+                        title: "Success",
+                        description: "Successfully signed up! You can now set your password.",
+                      });
+                      setShowPasswordDialog(true);
+                    }
+                  } catch (error) {
+                    toast({
+                      title: "Error",
+                      description: "Failed to sign up with Google",
+                      variant: "destructive",
+                    });
                   }
-                } catch (error) {
+                }}
+                onError={() => {
                   toast({
                     title: "Error",
                     description: "Failed to sign up with Google",
                     variant: "destructive",
                   });
-                }
-              }}
-              onError={() => {
-                toast({
-                  title: "Error",
-                  description: "Failed to sign up with Google",
-                  variant: "destructive",
-                });
-              }}
-            />
+                }}
+              />
+            </GoogleOAuthProvider>
           </motion.div>
         </motion.div>
       </main>
