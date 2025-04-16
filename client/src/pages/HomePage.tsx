@@ -38,6 +38,17 @@ const HomePage = () => {
   const [aiProvider, setAiProvider] = useState<'openai' | 'anthropic'>('openai');
   const [password, setPassword] = useState('');
   const [isUnlocked, setIsUnlocked] = useState(false);
+  const [isSignedIn, setIsSignedIn] = useState(false);
+
+  // Check if user is already signed in
+  useEffect(() => {
+    const savedPassword = localStorage.getItem('auth-password');
+    if (savedPassword) {
+      setIsSignedIn(true);
+      setPassword(savedPassword);
+      setIsUnlocked(true);
+    }
+  }, []);
   const [openaiApiKey, setOpenaiApiKey] = useState('');
   const [anthropicApiKey, setAnthropicApiKey] = useState('');
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
@@ -443,7 +454,8 @@ const HomePage = () => {
               <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Button>
 
-            <div className="flex flex-col gap-4">
+            {!isSignedIn && (
+              <div className="flex flex-col gap-4">
               <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ''}>
                 {import.meta.env.VITE_GOOGLE_CLIENT_ID ? (
                   <GoogleLogin
@@ -579,6 +591,7 @@ const HomePage = () => {
                 </DialogContent>
               </Dialog>
             </div>
+            )}
           </motion.div>
         </motion.div>
       </main>
