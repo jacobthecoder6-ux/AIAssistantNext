@@ -39,6 +39,8 @@ const HomePage = () => {
   const [password, setPassword] = useState('');
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [isSignedIn, setIsSignedIn] = useState(false);
+  const [openaiApiKey, setOpenaiApiKey] = useState('');
+  const [anthropicApiKey, setAnthropicApiKey] = useState('');
 
   // Check if user is already signed in
   useEffect(() => {
