@@ -53,6 +53,7 @@ const HomePage = () => {
   const [openaiApiKey, setOpenaiApiKey] = useState('');
   const [anthropicApiKey, setAnthropicApiKey] = useState('');
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [showApiKeyInputs, setShowApiKeyInputs] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('light');
 
   // Animation variants
@@ -444,6 +445,61 @@ const HomePage = () => {
             </motion.div>
           </div>
 
+          {/* API Key Inputs Section */}
+          {showApiKeyInputs && (
+            <motion.div variants={itemVariants} className="mb-8">
+              <Card className="p-6 shadow-lg border-2 border-yellow-400 dark:bg-gray-800/50 dark:border-yellow-500">
+                <div className="flex items-center mb-4">
+                  <Key className="w-6 h-6 text-yellow-500 mr-2" />
+                  <h2 className="text-xl font-semibold dark:text-white">API Configuration Required</h2>
+                </div>
+                
+                <div className="space-y-4">
+                  {aiProvider === 'openai' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="openai-key">OpenAI API Key</Label>
+                      <Input
+                        id="openai-key"
+                        type="password"
+                        placeholder="sk-..."
+                        value={openaiApiKey}
+                        onChange={(e) => setOpenaiApiKey(e.target.value)}
+                      />
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Get your API key from <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">OpenAI Platform</a>
+                      </p>
+                    </div>
+                  )}
+                  
+                  {aiProvider === 'anthropic' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="anthropic-key">Anthropic API Key</Label>
+                      <Input
+                        id="anthropic-key"
+                        type="password"
+                        placeholder="sk-ant-..."
+                        value={anthropicApiKey}
+                        onChange={(e) => setAnthropicApiKey(e.target.value)}
+                      />
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Get your API key from <a href="https://console.anthropic.com/" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Anthropic Console</a>
+                      </p>
+                    </div>
+                  )}
+                  
+                  <div className="flex gap-2">
+                    <Button onClick={() => setShowApiKeyInputs(false)} variant="outline">
+                      Hide
+                    </Button>
+                    <Button onClick={startChat} disabled={!((aiProvider === 'openai' && openaiApiKey) || (aiProvider === 'anthropic' && anthropicApiKey))}>
+                      Continue with API Key
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+          )}
+
           {/* Start and Sign Up Buttons */}
           <motion.div variants={itemVariants} className="flex justify-center gap-4">
             <Button 
@@ -503,8 +559,8 @@ const HomePage = () => {
                       });
                     }
                   }}
-                  onError={(error) => {
-                    console.error('Google sign in error:', error);
+                  onError={() => {
+                    console.error('Google sign in error');
                     toast({
                       title: "Error",
                       description: "Failed to sign in with Google",
