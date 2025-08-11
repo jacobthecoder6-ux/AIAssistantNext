@@ -88,23 +88,11 @@ const HomePage = () => {
   }, []);
 
   const startChat = () => {
-    // Validate API key is provided based on selected provider
-    if (aiProvider === 'openai' && !openaiApiKey) {
-      toast({
-        title: "OpenAI API Key Required",
-        description: "Please enter your OpenAI API key to continue",
-        variant: "destructive"
-      });
-      setShowApiKeyInputs(true);
-      return;
-    }
-
-    if (aiProvider === 'anthropic' && !anthropicApiKey) {
-      toast({
-        title: "Anthropic API Key Required",
-        description: "Please enter your Anthropic API key to continue",
-        variant: "destructive"
-      });
+    // Check if API key is required and available
+    const hasRequiredKey = (aiProvider === 'openai' && openaiApiKey) || 
+                          (aiProvider === 'anthropic' && anthropicApiKey);
+    
+    if (!hasRequiredKey) {
       setShowApiKeyInputs(true);
       return;
     }
@@ -448,11 +436,15 @@ const HomePage = () => {
           {/* API Key Inputs Section */}
           {showApiKeyInputs && (
             <motion.div variants={itemVariants} className="mb-8">
-              <Card className="p-6 shadow-lg border-2 border-yellow-400 dark:bg-gray-800/50 dark:border-yellow-500">
+              <Card className="p-6 shadow-lg border-2 border-blue-400 dark:bg-gray-800/50 dark:border-blue-500">
                 <div className="flex items-center mb-4">
-                  <Key className="w-6 h-6 text-yellow-500 mr-2" />
-                  <h2 className="text-xl font-semibold dark:text-white">API Configuration Required</h2>
+                  <Key className="w-6 h-6 text-blue-500 mr-2" />
+                  <h2 className="text-xl font-semibold dark:text-white">Enter Your API Key</h2>
                 </div>
+                
+                <p className="text-gray-600 dark:text-gray-300 mb-4">
+                  To use {aiProvider === 'openai' ? 'OpenAI' : 'Anthropic'} AI, please enter your API key below. This key will be stored locally in your browser.
+                </p>
                 
                 <div className="space-y-4">
                   {aiProvider === 'openai' && (
@@ -464,9 +456,10 @@ const HomePage = () => {
                         placeholder="sk-..."
                         value={openaiApiKey}
                         onChange={(e) => setOpenaiApiKey(e.target.value)}
+                        className="font-mono"
                       />
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Get your API key from <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">OpenAI Platform</a>
+                        Don't have a key? Get one from <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline font-medium">OpenAI Platform</a>
                       </p>
                     </div>
                   )}
@@ -480,19 +473,24 @@ const HomePage = () => {
                         placeholder="sk-ant-..."
                         value={anthropicApiKey}
                         onChange={(e) => setAnthropicApiKey(e.target.value)}
+                        className="font-mono"
                       />
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Get your API key from <a href="https://console.anthropic.com/" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Anthropic Console</a>
+                        Don't have a key? Get one from <a href="https://console.anthropic.com/" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline font-medium">Anthropic Console</a>
                       </p>
                     </div>
                   )}
                   
-                  <div className="flex gap-2">
-                    <Button onClick={() => setShowApiKeyInputs(false)} variant="outline">
-                      Hide
+                  <div className="flex gap-2 pt-2">
+                    <Button 
+                      onClick={startChat} 
+                      disabled={!((aiProvider === 'openai' && openaiApiKey) || (aiProvider === 'anthropic' && anthropicApiKey))}
+                      className="flex-1"
+                    >
+                      Start Chatting
                     </Button>
-                    <Button onClick={startChat} disabled={!((aiProvider === 'openai' && openaiApiKey) || (aiProvider === 'anthropic' && anthropicApiKey))}>
-                      Continue with API Key
+                    <Button onClick={() => setShowApiKeyInputs(false)} variant="outline">
+                      Cancel
                     </Button>
                   </div>
                 </div>

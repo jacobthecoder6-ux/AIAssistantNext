@@ -79,13 +79,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Text is required' });
       }
 
-      let language = 'en'; // Default to English
+      const password = req.headers.authorization?.split(' ')[1] || req.body.password;
 
-      // If API key is provided, use AI for detection based on provider
-      if (provider === 'anthropic') {
-        language = await detectLanguageWithAnthropic(text);
-      } else if (provider === 'openai') {
-        language = await detectLanguageWithAI(text);
+      }
+
+      // Replace this with your actual password
+
+      if (password !== VALID_PASSWORD) {
       } else {
         // Basic detection for common European languages
         // This is a fallback if no API key is provided
@@ -117,8 +117,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/chats', async (req, res) => {
     try {
       const { title = 'New Conversation' } = req.body;
-      const chatId = await storage.createChat(title);
-      res.json({ id: chatId });
+
+      const password = req.headers.authorization?.split(' ')[1] || req.body.password;
+
+      }
+
+      // Replace this with your actual password
+
+      if (password !== VALID_PASSWORD) {
     } catch (error) {
       console.error('Error creating chat:', error);
       res.status(500).json({ error: 'Failed to create chat' });
@@ -128,7 +134,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get chat history endpoint
   app.get('/api/chats', async (req, res) => {
     try {
+      const password = req.headers.authorization?.split(' ')[1] || req.body.password;
+
+      }
+
+      // Replace this with your actual password
+
+      }
       const chats = await storage.getAllChats();
+
       res.json({ chats });
     } catch (error) {
       console.error('Error fetching chats:', error);
@@ -139,22 +153,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get chat by ID endpoint
   app.get('/api/chats/:id', async (req, res) => {
     try {
-      const password = req.headers.authorization?.split(' ')[1] || req.body.password;
-
-      if (!password) {
-        return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
       // Replace this with your actual password
-      const VALID_PASSWORD = "your-secure-password";
 
       if (password !== VALID_PASSWORD) {
-        return res.status(401).json({ error: 'Invalid password' });
-      }
-      const chat = await storage.getChatById(req.params.id);
-
-      if (!chat) {
-        return res.status(404).json({ error: 'Chat not found' });
       }
 
       res.json({ chat });
@@ -169,20 +172,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const password = req.headers.authorization?.split(' ')[1] || req.body.password;
 
-      if (!password) {
-        return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
       // Replace this with your actual password
-      const VALID_PASSWORD = "your-secure-password";
 
       if (password !== VALID_PASSWORD) {
-        return res.status(401).json({ error: 'Invalid password' });
-      }
-      await storage.deleteChat(req.params.id);
-
-      res.json({ success: true });
-    } catch (error) {
       console.error('Error deleting chat:', error);
       res.status(500).json({ error: 'Failed to delete chat' });
     }
@@ -193,20 +187,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const password = req.headers.authorization?.split(' ')[1] || req.body.password;
 
-      if (!password) {
-        return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
       // Replace this with your actual password
-      const VALID_PASSWORD = "your-secure-password";
 
       if (password !== VALID_PASSWORD) {
-        return res.status(401).json({ error: 'Invalid password' });
-      }
-      await storage.clearAllChats();
-
-      res.json({ success: true });
-    } catch (error) {
       console.error('Error clearing chats:', error);
       res.status(500).json({ error: 'Failed to clear chats' });
     }
@@ -223,20 +208,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const password = req.headers.authorization?.split(' ')[1] || req.body.password;
 
-      if (!password) {
-        return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
       // Replace this with your actual password
-      const VALID_PASSWORD = "your-secure-password";
 
       if (password !== VALID_PASSWORD) {
-        return res.status(401).json({ error: 'Invalid password' });
-      }
-
-      const imageUrl = await generateImage(prompt, process.env.OPENAI_API_KEY || '', size);
-
-      res.json({ imageUrl });
     } catch (error) {
       console.error('Error generating image:', error);
       res.status(500).json({ 
@@ -257,24 +233,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const password = req.headers.authorization?.split(' ')[1] || req.body.password;
 
-      if (!password) {
-        return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
       // Replace this with your actual password
-      const VALID_PASSWORD = "your-secure-password";
 
       if (password !== VALID_PASSWORD) {
-        return res.status(401).json({ error: 'Invalid password' });
-      }
-
-      const result = await generateCodeAssistance(code, language, task, process.env.OPENAI_API_KEY || '');
-
-      if (req.body.chatId) {
-        // Record the interaction in chat history
-        await storage.addMessageToChat(req.body.chatId, {
-          type: 'user',
-          content: `Code assistance request for ${language}: ${task}\n\`\`\`${language}\n${code}\n\`\`\``,
           timestamp: new Date(),
           codeBlocks: { language, code }
         });
@@ -319,24 +282,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const password = req.headers.authorization?.split(' ')[1] || req.body.password;
 
-      if (!password) {
-        return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
       // Replace this with your actual password
-      const VALID_PASSWORD = "your-secure-password";
 
       if (password !== VALID_PASSWORD) {
-        return res.status(401).json({ error: 'Invalid password' });
-      }
-
-      const solution = await solveMathProblem(problem, process.env.OPENAI_API_KEY || '', showSteps);
-
-      if (req.body.chatId) {
-        // Record the interaction in chat history
-        await storage.addMessageToChat(req.body.chatId, {
-          type: 'user',
-          content: `Math problem: ${problem}`,
           timestamp: new Date()
         });
 
@@ -368,15 +318,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const password = req.headers.authorization?.split(' ')[1] || req.body.password;
 
-      if (!password) {
-        return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
       // Replace this with your actual password
-      const VALID_PASSWORD = "your-secure-password";
 
-      if (password !== VALID_PASSWORD) {
-        return res.status(401).json({ error: 'Invalid password' });
       }
 
       const snippet = await storage.createCodeSnippet?.({
@@ -404,24 +349,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Either userId or language is required' });
       }
 
-      const password = req.headers.authorization?.split(' ')[1] || req.body.password;
-
-      if (!password) {
-        return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
       // Replace this with your actual password
-      const VALID_PASSWORD = "your-secure-password";
 
       if (password !== VALID_PASSWORD) {
-        return res.status(401).json({ error: 'Invalid password' });
-      }
-
-      let snippets;
-      if (userId) {
-        snippets = await storage.getCodeSnippets?.(userId);
-      } else if (language) {
-        snippets = await storage.getCodeSnippetsByLanguage?.(language);
       }
 
       res.json({ snippets: snippets || [] });
@@ -451,15 +383,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const password = req.headers.authorization?.split(' ')[1] || req.body.password;
 
-      if (!password) {
-        return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
       // Replace this with your actual password
-      const VALID_PASSWORD = "your-secure-password";
 
-      if (password !== VALID_PASSWORD) {
-        return res.status(401).json({ error: 'Invalid password' });
       }
 
       // Create the chatbot
@@ -485,22 +412,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get specialized chatbot
   app.get('/api/chatbots/:id', async (req, res) => {
     try {
-      const password = req.headers.authorization?.split(' ')[1] || req.body.password;
-
-      if (!password) {
-        return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
       // Replace this with your actual password
-      const VALID_PASSWORD = "your-secure-password";
 
       if (password !== VALID_PASSWORD) {
-        return res.status(401).json({ error: 'Invalid password' });
-      }
-      const chatbot = await storage.getSpecializedChatbotById(req.params.id);
-
-      if (!chatbot) {
-        return res.status(404).json({ error: 'Chatbot not found' });
       }
 
       res.json({ chatbot });
@@ -515,18 +431,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const password = req.headers.authorization?.split(' ')[1] || req.body.password;
 
-      if (!password) {
-        return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
       // Replace this with your actual password
-      const VALID_PASSWORD = "your-secure-password";
 
       if (password !== VALID_PASSWORD) {
-        return res.status(401).json({ error: 'Invalid password' });
-      }
-      const chatbots = await storage.getAllSpecializedChatbots();
-      res.json({ chatbots });
     } catch (error) {
       console.error('Error fetching specialized chatbots:', error);
       res.status(500).json({ error: 'Failed to fetch specialized chatbots' });
@@ -544,15 +453,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const password = req.headers.authorization?.split(' ')[1] || req.body.password;
 
-      if (!password) {
-        return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
       // Replace this with your actual password
-      const VALID_PASSWORD = "your-secure-password";
 
-      if (password !== VALID_PASSWORD) {
-        return res.status(401).json({ error: 'Invalid password' });
       }
 
       // Get the chatbot
@@ -607,48 +511,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Export project code endpoint
   app.get('/api/export-code', async (req, res) => {
     try {
-      const password = req.headers.authorization?.split(' ')[1] || req.body.password;
-
-      if (!password) {
-        return res.status(400).json({ error: 'Password is required to use this feature' });
       }
 
       // Replace this with your actual password
-      const VALID_PASSWORD = "your-secure-password";
 
       if (password !== VALID_PASSWORD) {
-        return res.status(401).json({ error: 'Invalid password' });
-      }
-      // Create a structured representation of the project files and their contents
-      const projectStructure = {
-        name: "AI Chatbot Project",
-        description: "A multilingual AI chatbot with code assistance, image generation, math solving, and specialized chatbot creation capabilities",
-        version: "1.0.0",
-        license: "MIT",
-        author: "Created by Replit",
-        features: [
-          "Multilingual interface and AI responses",
-          "Code generation, analysis, and improvement",
-          "Image generation with DALL-E",
-          "Math problem solving with step-by-step solutions",
-          "Chat history storage",
-          "Theme customization",
-          "Specialized chatbot creation (therapist, financial advisor, etc.)"
-        ],
-        components: {
-          frontend: {
-            pages: [
-              "HomePage", "ChatPage", "CodeAssistantPage", "ImageGeneratorPage", 
-              "MathSolverPage", "ChatbotBuilderPage", "SpecializedChatbotPage"
-            ],
-            components: [
-              "ChatContainer", "ChatHeader", "ChatArea", "InputArea", 
-              "Sidebar", "SettingsPanel", "ExportCodeButton"
-            ],
-            libs: [
-              "openai.ts", "anthropic.ts", "queryClient.ts", "languageUtils.ts"
-            ]
-          },
           backend: {
             routes: [
               "/api/chat", "/api/detect-language", "/api/chats", 
@@ -731,8 +598,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Google token is required' });
       }
 
-      if (!password) {
-        return res.status(400).json({ error: 'Password is required' });
       }
 
       // Verify Google token
@@ -761,20 +626,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/validate-password', async (req, res) => {
     const password = req.headers.authorization?.split(' ')[1] || req.body.password;
 
-    if (!password) {
-      return res.status(400).json({ error: 'Password is required' });
     }
 
     // Replace this with your actual password
-    const VALID_PASSWORD = "your-secure-password";
 
     if (password === VALID_PASSWORD) {
       return res.json({ success: true });
     } else {
-      return res.status(401).json({ error: 'Invalid password' });
-    }
-  });
-
 
   const httpServer = createServer(app);
   return httpServer;

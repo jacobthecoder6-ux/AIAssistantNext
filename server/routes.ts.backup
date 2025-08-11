@@ -79,6 +79,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Text is required' });
       }
 
+      const password = req.headers.authorization?.split(' ')[1] || req.body.password;
+
+      if (!password) {
+        return res.status(400).json({ error: 'Password is required to use this feature' });
+      }
+
+      // Replace this with your actual password
+      const VALID_PASSWORD = "your-secure-password";
+
+      if (password !== VALID_PASSWORD) {
+        return res.status(401).json({ error: 'Invalid password' });
+      }
+
       let language = 'en'; // Default to English
 
       // If API key is provided, use AI for detection based on provider
@@ -117,7 +130,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/chats', async (req, res) => {
     try {
       const { title = 'New Conversation' } = req.body;
+
+      const password = req.headers.authorization?.split(' ')[1] || req.body.password;
+
+      if (!password) {
+        return res.status(400).json({ error: 'Password is required to use this feature' });
+      }
+
+      // Replace this with your actual password
+      const VALID_PASSWORD = "your-secure-password";
+
+      if (password !== VALID_PASSWORD) {
+        return res.status(401).json({ error: 'Invalid password' });
+      }
+
       const chatId = await storage.createChat(title);
+
       res.json({ id: chatId });
     } catch (error) {
       console.error('Error creating chat:', error);
@@ -128,7 +156,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get chat history endpoint
   app.get('/api/chats', async (req, res) => {
     try {
+      const password = req.headers.authorization?.split(' ')[1] || req.body.password;
+
+      if (!password) {
+        return res.status(400).json({ error: 'Password is required to use this feature' });
+      }
+
+      // Replace this with your actual password
+      const VALID_PASSWORD = "your-secure-password";
+
+      if (password !== VALID_PASSWORD) {
+        return res.status(401).json({ error: 'Invalid password' });
+      }
       const chats = await storage.getAllChats();
+
       res.json({ chats });
     } catch (error) {
       console.error('Error fetching chats:', error);
