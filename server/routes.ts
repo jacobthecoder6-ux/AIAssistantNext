@@ -17,18 +17,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Password must be exactly 7 letters (uppercase and lowercase allowed)' });
       }
 
-      // You can add your list of valid 7-letter passwords here (letters only, case-insensitive)
-      const validPasswords = [
-        'adminon', 'userdef', 'passwrd', 'coderun', 'testkey', 'helloww', 'worldly',
-        'superab', 'magical', 'powerful', 'smartly', 'quickly', 'bestkey', 'coolapp',
-        'TestApp', 'ChatBot', 'UnLocks', 'AiPower', 'KeyBoard', 'Example'
-      ];
-
-      if (validPasswords.includes(password.toLowerCase())) {
-        res.json({ valid: true });
-      } else {
-        res.status(401).json({ error: 'Invalid password' });
-      }
+      // Accept any 7-letter password that meets the format requirement
+      res.json({ valid: true });
     } catch (error) {
       console.error('Password validation error:', error);
       res.status(500).json({ error: 'Internal server error' });
@@ -794,21 +784,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ error: 'Password must be exactly 7 letters (uppercase and lowercase allowed)' });
     }
 
-    // List of valid 7-letter passwords
-    const VALID_PASSWORDS = [
-      'testapp',
-      'chatbot',
-      'unlocks',
-      'aipower',
-      'keyboard',
-      'example'
-    ];
-
-    if (VALID_PASSWORDS.includes(password.toLowerCase())) {
-      return res.json({ success: true });
-    } else {
-      return res.status(401).json({ error: 'Invalid password - must be a valid 7-letter password' });
-    }
+    // Accept any password that meets the 7-letter format requirement
+    return res.json({ success: true });
   });
 
 
