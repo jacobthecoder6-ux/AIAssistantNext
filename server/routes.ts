@@ -12,15 +12,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { password } = req.body;
       
-      // Validate 7-letter word format
-      if (!/^[a-zA-Z]{7}$/.test(password)) {
-        return res.status(400).json({ error: 'Password must be exactly 7 letters' });
+      // Validate 7-character format
+      if (!/^[a-zA-Z0-9]{7}$/.test(password)) {
+        return res.status(400).json({ error: 'Password must be exactly 7 characters' });
       }
       
-      // You can add your list of valid 7-letter words here
+      // You can add your list of valid 7-character passwords here
       const validPasswords = [
         'welcome', 'freedom', 'journey', 'success', 'friends', 'healthy', 'science',
-        'harmony', 'balance', 'amazing', 'awesome', 'perfect', 'winners', 'victory'
+        'harmony', 'balance', 'amazing', 'awesome', 'perfect', 'winners', 'victory',
+        'admin01', 'user123', 'pass007', 'code999', 'test123'
       ];
       
       if (validPasswords.includes(password.toLowerCase())) {

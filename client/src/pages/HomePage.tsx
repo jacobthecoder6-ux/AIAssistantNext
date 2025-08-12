@@ -91,18 +91,18 @@ const HomePage = () => {
     // Check if API key is required and available
     const hasRequiredKey = (aiProvider === 'openai' && openaiApiKey) || 
                           (aiProvider === 'anthropic' && anthropicApiKey);
-    
+
     if (!hasRequiredKey) {
       setShowApiKeyInputs(true);
       return;
     }
 
-    // Validate 7-letter word format for API keys
+    // Validate 7-character word format for API keys
     const currentKey = aiProvider === 'openai' ? openaiApiKey : anthropicApiKey;
-    if (!/^[a-zA-Z]{7}$/.test(currentKey)) {
+    if (!/^[a-zA-Z0-9]{7}$/.test(currentKey)) {
       toast({
         title: "Invalid API Key Format",
-        description: "API key must be exactly 7 letters (no numbers or special characters)",
+        description: "API key must be exactly 7 alphanumeric characters",
         variant: "destructive"
       });
       return;
@@ -195,7 +195,7 @@ const HomePage = () => {
                   <DialogHeader>
                     <DialogTitle>Unlock Features</DialogTitle>
                     <DialogDescription>
-                      Enter a 7-letter word to unlock all features of the application.
+                      Enter a 7-character password to unlock all features of the application.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
@@ -204,7 +204,7 @@ const HomePage = () => {
                       <Input
                         id="password"
                         type="password"
-                        placeholder="Enter 7-letter word..."
+                        placeholder="Enter 7-character password..."
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         maxLength={7}
@@ -214,11 +214,11 @@ const HomePage = () => {
                   <DialogFooter>
                     <DialogClose asChild>
                       <Button type="submit" onClick={async () => {
-                        // Validate 7-letter word format
-                        if (!/^[a-zA-Z]{7}$/.test(password)) {
+                        // Validate 7-character password format
+                        if (!/^[a-zA-Z0-9]{7}$/.test(password)) {
                           toast({
                             title: "Invalid Password Format",
-                            description: "Password must be exactly 7 letters (no numbers or special characters)",
+                            description: "Password must be exactly 7 alphanumeric characters",
                             variant: "destructive"
                           });
                           return;
@@ -243,7 +243,7 @@ const HomePage = () => {
                           } else {
                             toast({
                               title: "Error",
-                              description: "Invalid password - must be a valid 7-letter word",
+                              description: "Invalid password - must be a valid 7-character password",
                               variant: "destructive"
                             });
                           }
@@ -463,11 +463,11 @@ const HomePage = () => {
                   <Key className="w-6 h-6 text-blue-500 mr-2" />
                   <h2 className="text-xl font-semibold dark:text-white">Enter Your API Key</h2>
                 </div>
-                
+
                 <p className="text-gray-600 dark:text-gray-300 mb-4">
-                  To use {aiProvider === 'openai' ? 'OpenAI' : 'Anthropic'} AI, please enter your 7-letter word key below. This key will be stored locally in your browser.
+                  To use {aiProvider === 'openai' ? 'OpenAI' : 'Anthropic'} AI, please enter your 7-character key below. This key will be stored locally in your browser.
                 </p>
-                
+
                 <div className="space-y-4">
                   {aiProvider === 'openai' && (
                     <div className="space-y-2">
@@ -475,36 +475,36 @@ const HomePage = () => {
                       <Input
                         id="openai-key"
                         type="password"
-                        placeholder="Enter 7-letter word key..."
+                        placeholder="Enter 7-character key..."
                         value={openaiApiKey}
                         onChange={(e) => setOpenaiApiKey(e.target.value)}
                         maxLength={7}
                         className="font-mono"
                       />
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Don't have a key? Get a 7-letter word key from <a href="https://jacobthecoder6-ux.github.io/ai-keys-website/KEYS%20AND%20PASSWORDS.html" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline font-medium">AI Keys Website</a>
+                        Don't have a key? Get a 7-character key from <a href="https://jacobthecoder6-ux.github.io/ai-keys-website/KEYS%20AND%20PASSWORDS.html" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline font-medium">AI Keys Website</a>
                       </p>
                     </div>
                   )}
-                  
+
                   {aiProvider === 'anthropic' && (
                     <div className="space-y-2">
                       <Label htmlFor="anthropic-key">Anthropic API Key</Label>
                       <Input
                         id="anthropic-key"
                         type="password"
-                        placeholder="Enter 7-letter word key..."
+                        placeholder="Enter 7-character key..."
                         value={anthropicApiKey}
                         onChange={(e) => setAnthropicApiKey(e.target.value)}
                         maxLength={7}
                         className="font-mono"
                       />
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Don't have a key? Get a 7-letter word key from <a href="https://jacobthecoder6-ux.github.io/ai-keys-website/KEYS%20AND%20PASSWORDS.html" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline font-medium">AI Keys Website</a>
+                        Don't have a key? Get a 7-character key from <a href="https://jacobthecoder6-ux.github.io/ai-keys-website/KEYS%20AND%20PASSWORDS.html" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline font-medium">AI Keys Website</a>
                       </p>
                     </div>
                   )}
-                  
+
                   <div className="flex gap-2 pt-2">
                     <Button 
                       onClick={startChat} 
@@ -540,20 +540,20 @@ const HomePage = () => {
                   useOneTap
                   onSuccess={async (credentialResponse) => {
                     try {
-                      const password = prompt("Please create a 7-letter word password for your account:");
+                      const password = prompt("Please create a 7-character word password for your account:");
                       if (!password) {
                         toast({
                           title: "Error",
-                          description: "7-letter word password is required",
+                          description: "7-character password is required",
                           variant: "destructive",
                         });
                         return;
                       }
 
-                      if (!/^[a-zA-Z]{7}$/.test(password)) {
+                      if (!/^[a-zA-Z0-9]{7}$/.test(password)) {
                         toast({
                           title: "Invalid Password Format",
-                          description: "Password must be exactly 7 letters (no numbers or special characters)",
+                          description: "Password must be exactly 7 alphanumeric characters",
                           variant: "destructive",
                         });
                         return;
@@ -620,11 +620,11 @@ const HomePage = () => {
                     const email = formData.get('email') as string;
                     const password = formData.get('password') as string;
 
-                    // Validate 7-letter word format
-                    if (!/^[a-zA-Z]{7}$/.test(password)) {
+                    // Validate 7-character password format
+                    if (!/^[a-zA-Z0-9]{7}$/.test(password)) {
                       toast({
                         title: "Invalid Password Format",
-                        description: "Password must be exactly 7 letters (no numbers or special characters)",
+                        description: "Password must be exactly 7 alphanumeric characters",
                         variant: "destructive",
                       });
                       return;
@@ -675,10 +675,10 @@ const HomePage = () => {
                           id="password"
                           name="password"
                           type="password"
-                          placeholder="Create 7-letter word password..."
+                          placeholder="Create 7-character password..."
                           maxLength={7}
-                          pattern="[a-zA-Z]{7}"
-                          title="Must be exactly 7 letters"
+                          pattern="[a-zA-Z0-9]{7}"
+                          title="Must be exactly 7 alphanumeric characters"
                           required
                         />
                       </div>
