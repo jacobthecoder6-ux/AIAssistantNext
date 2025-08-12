@@ -240,8 +240,8 @@ const HomePage = () => {
                             localStorage.setItem('is-unlocked', 'true');
                             localStorage.setItem('auth-password', password);
                             toast({
-                              title: "Welcome to Unlocked AI!",
-                              description: "You now have access to all features. Start chatting!"
+                              title: "Access Granted",
+                              description: "Redirecting to AI Chatbot..."
                             });
                             // Auto-navigate to chat after a short delay
                             setTimeout(() => {
