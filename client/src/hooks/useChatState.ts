@@ -56,11 +56,11 @@ const useChatState = () => {
       const welcomeMessage: Message = {
         id: uuidv4(),
         type: 'bot',
-        content: "👋 Hello! I'm your multilingual AI assistant. I can help answer questions, provide information, or just chat in multiple languages. What would you like to talk about today?",
+        content: "👋 Hello! I'm Unlocked AI, your ultimate multilingual assistant. How can I help you today?",
         timestamp: new Date()
       };
       setMessages([welcomeMessage]);
-      
+
       // Create a new chat in history
       const newChatId = uuidv4();
       const newChat = {
@@ -68,11 +68,11 @@ const useChatState = () => {
         title: "New Conversation",
         timestamp: new Date()
       };
-      
+
       const updatedHistory = [newChat, ...chatHistory];
       setChatHistory(updatedHistory);
       setCurrentChatId(newChatId);
-      
+
       // Save to localStorage
       localStorage.setItem('chat-history', JSON.stringify(updatedHistory));
     }
@@ -80,7 +80,7 @@ const useChatState = () => {
 
   const sendMessage = async (message: string) => {
     if (!message.trim()) return;
-    
+
     // Add user message to chat
     const userMessage: Message = {
       id: uuidv4(),
@@ -88,15 +88,15 @@ const useChatState = () => {
       content: message,
       timestamp: new Date()
     };
-    
+
     setMessages(prev => [...prev, userMessage]);
     setCurrentMessage("");
     setIsLoading(true);
-    
+
     try {
       // Detect language of the user message
       const detectedLanguage = await detectLanguage(message);
-      
+
       // Send message to backend API with chat ID for persistence
       const response = await apiRequest<{ response: string }>('/api/chat', {
         method: 'POST',
@@ -109,7 +109,7 @@ const useChatState = () => {
           provider: 'openai'
         })
       });
-      
+
       if (response) {
         // Add bot response to chat
         const botMessage: Message = {
@@ -118,10 +118,10 @@ const useChatState = () => {
           content: response.response,
           timestamp: new Date()
         };
-        
+
         setMessages(prev => [...prev, botMessage]);
       }
-      
+
       // Update chat history with first message as title if this is a new chat
       if (currentChatId) {
         const updatedHistory = chatHistory.map(chat => {
@@ -130,25 +130,25 @@ const useChatState = () => {
             const title = message.length > 30 
               ? message.substring(0, 30) + "..." 
               : message;
-            
+
             // Update the title on the server
             apiRequest('/api/chats/' + currentChatId, {
               method: 'PATCH',
               body: JSON.stringify({ title })
             }).catch(err => console.error("Error updating chat title:", err));
-            
+
             return { ...chat, title, timestamp: new Date() };
           }
           return chat;
         });
-        
+
         setChatHistory(updatedHistory);
         localStorage.setItem('chat-history', JSON.stringify(updatedHistory));
       }
-      
+
     } catch (error) {
       console.error("Error sending message:", error);
-      
+
       // Add error message to chat
       const errorMessage: Message = {
         id: uuidv4(),
@@ -156,7 +156,7 @@ const useChatState = () => {
         content: "Sorry, there was an error processing your request. Please try again later.",
         timestamp: new Date()
       };
-      
+
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
@@ -166,7 +166,7 @@ const useChatState = () => {
   const startNewChat = async () => {
     setMessages([]);
     setIsLoading(true);
-    
+
     try {
       // Create new chat on the server
       const chatResponse = await apiRequest<{ id: string }>('/api/chats', {
@@ -175,19 +175,19 @@ const useChatState = () => {
           title: "New Conversation"
         })
       });
-      
+
       if (chatResponse?.id) {
         const newChatId = chatResponse.id;
-        
+
         // Add welcome message
         const welcomeMessage: Message = {
           id: uuidv4(),
           type: 'bot',
-          content: "👋 Starting a new conversation! How can I assist you today?",
+          content: "👋 Welcome! I'm Unlocked AI, your ultimate multilingual assistant. How can I help you today?",
           timestamp: new Date()
         };
         setMessages([welcomeMessage]);
-        
+
         // Add the welcome message to the chat
         await apiRequest(`/api/chats/${newChatId}/messages`, {
           method: 'POST',
@@ -196,19 +196,19 @@ const useChatState = () => {
             content: welcomeMessage.content
           })
         }).catch(err => console.error("Error adding welcome message:", err));
-        
+
         // Create a new chat in history
         const newChat = {
           id: newChatId,
           title: "New Conversation",
           timestamp: new Date()
         };
-        
+
         // Update local state
         const updatedHistory = [newChat, ...chatHistory];
         setChatHistory(updatedHistory);
         setCurrentChatId(newChatId);
-        
+
         // Save to localStorage as backup
         localStorage.setItem('chat-history', JSON.stringify(updatedHistory));
       } else {
@@ -216,23 +216,23 @@ const useChatState = () => {
       }
     } catch (error) {
       console.error("Error creating new chat:", error);
-      
+
       // Fallback to local-only chat if server fails
       const newChatId = uuidv4();
       const welcomeMessage: Message = {
         id: uuidv4(),
         type: 'bot',
-        content: "👋 Starting a new conversation! How can I assist you today?",
+        content: "👋 Welcome! I'm Unlocked AI, your ultimate multilingual assistant. How can I help you today?",
         timestamp: new Date()
       };
       setMessages([welcomeMessage]);
-      
+
       const newChat = {
         id: newChatId,
         title: "New Conversation",
         timestamp: new Date()
       };
-      
+
       const updatedHistory = [newChat, ...chatHistory];
       setChatHistory(updatedHistory);
       setCurrentChatId(newChatId);
@@ -248,15 +248,15 @@ const useChatState = () => {
       await apiRequest('/api/chats', {
         method: 'DELETE'
       });
-      
+
       // Clear local state
       setChatHistory([]);
       localStorage.removeItem('chat-history');
-      
+
       // Clear current messages and chat ID
       setMessages([]);
       setCurrentChatId(null);
-      
+
       // Remove all chat-* items from localStorage
       Object.keys(localStorage).forEach(key => {
         if (key.startsWith('chat-')) {
@@ -282,7 +282,7 @@ const useChatState = () => {
           timestamp: string;
         }>
       } }>(`/api/chats/${id}`);
-      
+
       if (chatResponse?.chat) {
         // If messages are included in the response, use them
         if (chatResponse.chat.messages && chatResponse.chat.messages.length > 0) {
@@ -293,7 +293,7 @@ const useChatState = () => {
         } else {
           // If no messages found, try to fetch from localStorage as fallback
           const storedChatData = localStorage.getItem(`chat-${id}`);
-          
+
           if (storedChatData) {
             const chatData = JSON.parse(storedChatData);
             setMessages(chatData.messages.map((msg: any) => ({
@@ -311,16 +311,16 @@ const useChatState = () => {
             setMessages([welcomeMessage]);
           }
         }
-        
+
         setCurrentChatId(id);
         setIsSidebarOpen(false);
-        
+
         // Update the timestamp for this chat
         apiRequest('/api/chats/' + id, {
           method: 'PATCH',
           body: JSON.stringify({ timestamp: new Date() })
         }).catch(err => console.error("Error updating chat timestamp:", err));
-        
+
         // Update local state
         const updatedHistory = chatHistory.map(chat => 
           chat.id === id ? {...chat, timestamp: new Date()} : chat
