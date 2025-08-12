@@ -1,9 +1,9 @@
 import { db } from './db';
-import { 
-  users, chats, messages, codeSnippets, promptTemplates, 
+import {
+  users, chats, messages, codeSnippets, promptTemplates,
   specializedChatbots, specializedChatbotMessages,
   type User, type InsertUser, type InsertChat, type InsertMessage,
-  type CodeSnippet, type PromptTemplate, 
+  type CodeSnippet, type PromptTemplate,
   type SpecializedChatbot, type SpecializedChatbotMessage,
   type InsertCodeSnippet, type InsertPromptTemplate,
   type InsertSpecializedChatbot, type InsertSpecializedChatbotMessage
@@ -11,6 +11,7 @@ import {
 import { eq, desc, and } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs/promises'; // Import fs/promises for async file operations
+import path from 'path'; // Import path module
 
 // Types for chat and messages (for in-memory representation)
 export interface Message {
@@ -61,11 +62,16 @@ export interface IStorage {
   getPromptTemplates?(category?: string): Promise<PromptTemplate[]>;
 
   // Password storage (insecure - for demonstration only)
-  storeUserPassword(googleToken: string, password: string): Promise<void>;
+  storeUserPassword(email: string, password: string): Promise<void>;
+  // Premium account operations
+  markAsPremiumAccount(email: string): Promise<void>;
+  isPremiumAccount(email: string): Promise<boolean>;
 }
 
 // Database storage implementation
 export class DatabaseStorage implements IStorage {
+  private userPasswordsFile = path.join(__dirname, 'user-passwords.json'); // Define the path for user passwords
+
   // User operations
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
@@ -325,12 +331,67 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Store user password (insecure - for demonstration only)
-  async storeUserPassword(googleToken: string, password: string): Promise<void> {
-    // In a real app, you should hash the password before storing
-    // This is a simplified version for demonstration purposes only.  Do NOT use this in production.
-    const userPasswords = JSON.parse(await fs.readFile('user-passwords.json', 'utf-8').catch(() => '{}'));
-    userPasswords[googleToken] = password;
-    await fs.writeFile('user-passwords.json', JSON.stringify(userPasswords));
+  async storeUserPassword(email: string, password: string): Promise<void> {
+    try {
+      // Read existing data
+      let userData: Record<string, string> = {};
+      if (fs.existsSync(this.userPasswordsFile)) {
+        const data = fs.readFileSync(this.userPasswordsFile, 'utf8');
+        userData = JSON.parse(data);
+      }
+
+      // Add/update user
+      userData[email] = password;
+
+      // Write back to file
+      fs.writeFileSync(this.userPasswordsFile, JSON.stringify(userData));
+      console.log('User password stored successfully');
+    } catch (error) {
+      console.error('Error storing user password:', error);
+      throw error;
+    }
+  }
+
+  async markAsPremiumAccount(email: string): Promise<void> {
+    try {
+      const premiumFile = path.join(__dirname, '..', 'premium-accounts.json');
+
+      // Read existing premium accounts
+      let premiumAccounts: string[] = [];
+      if (fs.existsSync(premiumFile)) {
+        const data = fs.readFileSync(premiumFile, 'utf8');
+        premiumAccounts = JSON.parse(data);
+      }
+
+      // Add email if not already in list
+      if (!premiumAccounts.includes(email)) {
+        premiumAccounts.push(email);
+        fs.writeFileSync(premiumFile, JSON.stringify(premiumAccounts, null, 2));
+      }
+
+      console.log('Premium account marked successfully');
+    } catch (error) {
+      console.error('Error marking premium account:', error);
+      throw error;
+    }
+  }
+
+  async isPremiumAccount(email: string): Promise<boolean> {
+    try {
+      const premiumFile = path.join(__dirname, '..', 'premium-accounts.json');
+
+      if (!fs.existsSync(premiumFile)) {
+        return false;
+      }
+
+      const data = fs.readFileSync(premiumFile, 'utf8');
+      const premiumAccounts: string[] = JSON.parse(data);
+
+      return premiumAccounts.includes(email);
+    } catch (error) {
+      console.error('Error checking premium account:', error);
+      return false;
+    }
   }
 }
 

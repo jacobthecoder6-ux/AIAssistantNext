@@ -59,7 +59,7 @@ const ChatPage = ({ currentChatId, onToggleSidebar }: ChatPageProps) => {
       setFontSize(parseInt(savedFontSize));
     }
   }, []);
-  
+
   // Load chat if currentChatId is provided
   useEffect(() => {
     if (currentChatId) {

@@ -28,12 +28,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Chat endpoint
   app.post('/api/chat', async (req, res) => {
     try {
-      const { message, model, language, provider = 'openai' } = req.body;
+      const { message, model, language, provider = 'openai', userEmail } = req.body;
 
       if (!message) {
         return res.status(400).json({ error: 'Message is required' });
       }
 
+      // Check if user is premium (gets free access)
+      const isPremium = userEmail ? await storage.isPremiumAccount?.(userEmail) : false;
 
       // Get chat history from memory storage
       let chatHistory: Array<{role: string, content: string}> = [];
@@ -49,16 +51,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Generate response based on selected provider
       let response = '';
+      const apiKey = isPremium ? process.env.OPENAI_API_KEY || process.env.ANTHROPIC_API_KEY : undefined;
+      
       if (provider === 'anthropic') {
         const anthropicResponse = await generateAnthropicResponse(message, chatHistory, {
           model,
           language,
+          apiKey: isPremium ? process.env.ANTHROPIC_API_KEY : undefined
         });
         response = anthropicResponse || 'Error: Unable to generate response from Anthropic';
       } else {
         const openaiResponse = await generateAIResponse(message, chatHistory, {
           model,
           language,
+          apiKey: isPremium ? process.env.OPENAI_API_KEY : undefined
         });
         response = openaiResponse || 'Error: Unable to generate response from OpenAI';
       }
@@ -786,6 +792,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     // Accept any password that meets the 7-letter format requirement
     return res.json({ success: true });
+  });
+
+  // Premium account creation endpoint
+  app.post('/api/create-premium-account', async (req, res) => {
+    try {
+      const { email, password } = req.body;
+
+      if (!email || !password) {
+        return res.status(400).json({ error: 'Email and password are required' });
+      }
+
+      // Validate email format
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return res.status(400).json({ error: 'Invalid email format' });
+      }
+
+      // Validate 7-character password format with only letters
+      if (!/^[a-zA-Z]{7}$/.test(password)) {
+        return res.status(400).json({ error: 'Password must be exactly 7 letters (uppercase and lowercase allowed)' });
+      }
+
+      // Store the premium account
+      await storage.storeUserPassword(email, password);
+      
+      // Mark as premium account
+      await storage.markAsPremiumAccount?.(email);
+
+      res.json({ 
+        success: true,
+        message: 'Premium account created successfully',
+        email: email
+      });
+    } catch (error) {
+      console.error('Error creating premium account:', error);
+      res.status(500).json({ error: 'Failed to create premium account' });
+    }
   });
 
 

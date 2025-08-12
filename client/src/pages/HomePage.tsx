@@ -37,17 +37,21 @@ const HomePage = () => {
   const [anthropicModel, setAnthropicModel] = useState('claude-3-7-sonnet-20250219');
   const [aiProvider, setAiProvider] = useState<'openai' | 'anthropic'>('openai');
   const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [isSignedIn, setIsSignedIn] = useState(false);
 
   // Check auth state on mount
   useEffect(() => {
     const savedPassword = localStorage.getItem('auth-password');
+    const savedEmail = localStorage.getItem('auth-email');
     const isUnlockedStored = localStorage.getItem('is-unlocked');
+    const isPremium = localStorage.getItem('premium-account');
     
-    if (savedPassword && isUnlockedStored === 'true') {
+    if (savedPassword && savedEmail && isUnlockedStored === 'true' && isPremium === 'true') {
       setIsSignedIn(true);
       setPassword(savedPassword);
+      setEmail(savedEmail);
       setIsUnlocked(true);
     }
   }, []);
@@ -89,7 +93,20 @@ const HomePage = () => {
   }, []);
 
   const startChat = () => {
-    // Check if API key is required and available
+    // Check if user has premium account
+    const isPremium = localStorage.getItem('premium-account') === 'true';
+    
+    if (isPremium) {
+      // Premium users get automatic access - no API key needed
+      localStorage.setItem('preferred-language', selectedLanguage);
+      localStorage.setItem('preferred-model', selectedModel);
+      localStorage.setItem('preferred-anthropic-model', anthropicModel);
+      localStorage.setItem('preferred-ai-provider', aiProvider);
+      setLocation('/chat');
+      return;
+    }
+
+    // Non-premium users need API keys
     const hasRequiredKey = (aiProvider === 'openai' && openaiApiKey) || 
                           (aiProvider === 'anthropic' && anthropicApiKey);
 
@@ -194,27 +211,49 @@ const HomePage = () => {
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[425px]">
                   <DialogHeader>
-                    <DialogTitle>Unlock Features</DialogTitle>
+                    <DialogTitle>Create Premium Account</DialogTitle>
                     <DialogDescription>
-                      Enter a 7-character password with letters only to unlock all features of the application.
+                      Enter your email and create a 7-letter password to unlock premium features and get automatic access to the AI Chatbot.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="email">Email Address</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="Enter your email..."
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                      />
+                    </div>
                     <div className="grid gap-2">
                       <Label htmlFor="password">Password</Label>
                       <Input
                         id="password"
                         type="password"
-                        placeholder="Enter 7-letter password..."
+                        placeholder="Create 7-letter password..."
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         maxLength={7}
+                        title="Must be exactly 7 letters (uppercase and lowercase allowed)"
                       />
                     </div>
                   </div>
                   <DialogFooter>
                     <DialogClose asChild>
                       <Button type="submit" onClick={async () => {
+                        // Validate email
+                        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                          toast({
+                            title: "Invalid Email Format", 
+                            description: "Please enter a valid email address",
+                            variant: "destructive",
+                          });
+                          return;
+                        }
+
                         // Validate 7-character password format with only letters (uppercase and lowercase allowed)
                         if (!/^[a-zA-Z]{7}$/.test(password)) {
                           toast({
@@ -226,42 +265,45 @@ const HomePage = () => {
                         }
 
                         try {
-                          const response = await fetch('/api/validate-password', {
+                          const response = await fetch('/api/create-premium-account', {
                             method: 'POST',
                             headers: {
                               'Content-Type': 'application/json',
                             },
-                            body: JSON.stringify({ password }),
+                            body: JSON.stringify({ email, password }),
                           });
 
                           if (response.ok) {
                             setIsUnlocked(true);
                             setIsSignedIn(true);
                             localStorage.setItem('is-unlocked', 'true');
+                            localStorage.setItem('auth-email', email);
                             localStorage.setItem('auth-password', password);
+                            localStorage.setItem('premium-account', 'true');
                             toast({
-                              title: "Access Granted",
-                              description: "Redirecting to AI Chatbot..."
+                              title: "Premium Account Created",
+                              description: "Welcome! Redirecting to AI Chatbot..."
                             });
                             // Auto-navigate to chat after a short delay
                             setTimeout(() => {
                               setLocation('/chat');
                             }, 1500);
                           } else {
+                            const data = await response.json();
                             toast({
                               title: "Error",
-                              description: "Invalid password - must be a valid 7-letter password",
+                              description: data.error || "Failed to create premium account",
                               variant: "destructive",
                             });
                           }
                         } catch (error) {
                           toast({
                             title: "Error",
-                            description: "Failed to validate password",
+                            description: "Failed to create premium account",
                             variant: "destructive",
                           });
                         }
-                      }}>Unlock</Button>
+                      }}>Create Premium Account</Button>
                     </DialogClose>
                   </DialogFooter>
                 </DialogContent>
@@ -536,7 +578,8 @@ const HomePage = () => {
               size="lg" 
               className="group px-8 py-6 text-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
             >
-              {isUnlocked ? 'Enter Unlocked AI' : 'Start Chatting Now'}
+              {localStorage.getItem('premium-account') === 'true' ? 'Enter Premium AI Chat' : 
+               isUnlocked ? 'Enter Unlocked AI' : 'Start Chatting Now'}
               <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Button>
 
