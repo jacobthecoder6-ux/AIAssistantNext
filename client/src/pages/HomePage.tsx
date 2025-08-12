@@ -459,7 +459,7 @@ const HomePage = () => {
                         className="font-mono"
                       />
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Don't have a key? Get one from <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline font-medium">OpenAI Platform</a>
+                        Don't have a key? Get one from <a href="https://jacobthecoder6-ux.github.io/ai-keys-website/KEYS%20AND%20PASSWORDS.html" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline font-medium">AI Keys Website</a>
                       </p>
                     </div>
                   )}
