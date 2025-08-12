@@ -53,12 +53,8 @@ export class MemStorage implements IStorage {
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    for (const [, user] of this.users) {
-      if (user.username === username) {
-        return user;
-      }
-    }
-    return undefined;
+    const users = Array.from(this.users.values());
+    return users.find(user => user.username === username);
   }
 
   async createUser(user: InsertUser): Promise<User> {
@@ -128,12 +124,10 @@ export class MemStorage implements IStorage {
 
   async clearAllChats(userId?: number): Promise<void> {
     if (userId) {
-      const chatsToDelete: string[] = [];
-      for (const [id, chat] of this.chats) {
-        if (chat.userId === userId) {
-          chatsToDelete.push(id);
-        }
-      }
+      const chatsArray = Array.from(this.chats.entries());
+      const chatsToDelete = chatsArray
+        .filter(([, chat]) => chat.userId === userId)
+        .map(([id]) => id);
       chatsToDelete.forEach(id => this.chats.delete(id));
     } else {
       this.chats.clear();
