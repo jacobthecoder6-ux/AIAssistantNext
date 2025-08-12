@@ -12,6 +12,11 @@ import { eq, desc, and } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs/promises'; // Import fs/promises for async file operations
 import path from 'path'; // Import path module
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Types for chat and messages (for in-memory representation)
 export interface Message {
@@ -335,16 +340,18 @@ export class DatabaseStorage implements IStorage {
     try {
       // Read existing data
       let userData: Record<string, string> = {};
-      if (fs.existsSync(this.userPasswordsFile)) {
-        const data = fs.readFileSync(this.userPasswordsFile, 'utf8');
+      try {
+        const data = await fs.readFile(this.userPasswordsFile, 'utf8');
         userData = JSON.parse(data);
+      } catch (error) {
+        // File doesn't exist yet, userData remains empty object
       }
 
       // Add/update user
       userData[email] = password;
 
       // Write back to file
-      fs.writeFileSync(this.userPasswordsFile, JSON.stringify(userData));
+      await fs.writeFile(this.userPasswordsFile, JSON.stringify(userData));
       console.log('User password stored successfully');
     } catch (error) {
       console.error('Error storing user password:', error);
@@ -358,15 +365,17 @@ export class DatabaseStorage implements IStorage {
 
       // Read existing premium accounts
       let premiumAccounts: string[] = [];
-      if (fs.existsSync(premiumFile)) {
-        const data = fs.readFileSync(premiumFile, 'utf8');
+      try {
+        const data = await fs.readFile(premiumFile, 'utf8');
         premiumAccounts = JSON.parse(data);
+      } catch (error) {
+        // File doesn't exist yet, premiumAccounts remains empty array
       }
 
       // Add email if not already in list
       if (!premiumAccounts.includes(email)) {
         premiumAccounts.push(email);
-        fs.writeFileSync(premiumFile, JSON.stringify(premiumAccounts, null, 2));
+        await fs.writeFile(premiumFile, JSON.stringify(premiumAccounts, null, 2));
       }
 
       console.log('Premium account marked successfully');
@@ -380,14 +389,14 @@ export class DatabaseStorage implements IStorage {
     try {
       const premiumFile = path.join(__dirname, '..', 'premium-accounts.json');
 
-      if (!fs.existsSync(premiumFile)) {
+      try {
+        const data = await fs.readFile(premiumFile, 'utf8');
+        const premiumAccounts: string[] = JSON.parse(data);
+        return premiumAccounts.includes(email);
+      } catch (error) {
+        // File doesn't exist or can't be read, return false
         return false;
       }
-
-      const data = fs.readFileSync(premiumFile, 'utf8');
-      const premiumAccounts: string[] = JSON.parse(data);
-
-      return premiumAccounts.includes(email);
     } catch (error) {
       console.error('Error checking premium account:', error);
       return false;
