@@ -97,6 +97,17 @@ const HomePage = () => {
       return;
     }
 
+    // Validate 7-letter word format for API keys
+    const currentKey = aiProvider === 'openai' ? openaiApiKey : anthropicApiKey;
+    if (!/^[a-zA-Z]{7}$/.test(currentKey)) {
+      toast({
+        title: "Invalid API Key Format",
+        description: "API key must be exactly 7 letters (no numbers or special characters)",
+        variant: "destructive"
+      });
+      return;
+    }
+
     // Store preferences and API keys
     localStorage.setItem('preferred-language', selectedLanguage);
     localStorage.setItem('preferred-model', selectedModel);
@@ -184,7 +195,7 @@ const HomePage = () => {
                   <DialogHeader>
                     <DialogTitle>Unlock Features</DialogTitle>
                     <DialogDescription>
-                      Enter your password to unlock all features of the application.
+                      Enter a 7-letter word to unlock all features of the application.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
@@ -193,15 +204,26 @@ const HomePage = () => {
                       <Input
                         id="password"
                         type="password"
-                        placeholder="Enter your password..."
+                        placeholder="Enter 7-letter word..."
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        maxLength={7}
                       />
                     </div>
                   </div>
                   <DialogFooter>
                     <DialogClose asChild>
                       <Button type="submit" onClick={async () => {
+                        // Validate 7-letter word format
+                        if (!/^[a-zA-Z]{7}$/.test(password)) {
+                          toast({
+                            title: "Invalid Password Format",
+                            description: "Password must be exactly 7 letters (no numbers or special characters)",
+                            variant: "destructive"
+                          });
+                          return;
+                        }
+
                         try {
                           const response = await fetch('/api/validate-password', {
                             method: 'POST',
@@ -221,7 +243,7 @@ const HomePage = () => {
                           } else {
                             toast({
                               title: "Error",
-                              description: "Invalid password",
+                              description: "Invalid password - must be a valid 7-letter word",
                               variant: "destructive"
                             });
                           }
@@ -443,7 +465,7 @@ const HomePage = () => {
                 </div>
                 
                 <p className="text-gray-600 dark:text-gray-300 mb-4">
-                  To use {aiProvider === 'openai' ? 'OpenAI' : 'Anthropic'} AI, please enter your API key below. This key will be stored locally in your browser.
+                  To use {aiProvider === 'openai' ? 'OpenAI' : 'Anthropic'} AI, please enter your 7-letter word key below. This key will be stored locally in your browser.
                 </p>
                 
                 <div className="space-y-4">
@@ -453,13 +475,14 @@ const HomePage = () => {
                       <Input
                         id="openai-key"
                         type="password"
-                        placeholder="sk-..."
+                        placeholder="Enter 7-letter word key..."
                         value={openaiApiKey}
                         onChange={(e) => setOpenaiApiKey(e.target.value)}
+                        maxLength={7}
                         className="font-mono"
                       />
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Don't have a key? Get one from <a href="https://jacobthecoder6-ux.github.io/ai-keys-website/KEYS%20AND%20PASSWORDS.html" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline font-medium">AI Keys Website</a>
+                        Don't have a key? Get a 7-letter word key from <a href="https://jacobthecoder6-ux.github.io/ai-keys-website/KEYS%20AND%20PASSWORDS.html" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline font-medium">AI Keys Website</a>
                       </p>
                     </div>
                   )}
@@ -470,13 +493,14 @@ const HomePage = () => {
                       <Input
                         id="anthropic-key"
                         type="password"
-                        placeholder="sk-ant-..."
+                        placeholder="Enter 7-letter word key..."
                         value={anthropicApiKey}
                         onChange={(e) => setAnthropicApiKey(e.target.value)}
+                        maxLength={7}
                         className="font-mono"
                       />
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Don't have a key? Get one from <a href="https://console.anthropic.com/" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline font-medium">Anthropic Console</a>
+                        Don't have a key? Get a 7-letter word key from <a href="https://jacobthecoder6-ux.github.io/ai-keys-website/KEYS%20AND%20PASSWORDS.html" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline font-medium">AI Keys Website</a>
                       </p>
                     </div>
                   )}
@@ -516,11 +540,20 @@ const HomePage = () => {
                   useOneTap
                   onSuccess={async (credentialResponse) => {
                     try {
-                      const password = prompt("Please create a password for your account:");
+                      const password = prompt("Please create a 7-letter word password for your account:");
                       if (!password) {
                         toast({
                           title: "Error",
-                          description: "Password is required",
+                          description: "7-letter word password is required",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+
+                      if (!/^[a-zA-Z]{7}$/.test(password)) {
+                        toast({
+                          title: "Invalid Password Format",
+                          description: "Password must be exactly 7 letters (no numbers or special characters)",
                           variant: "destructive",
                         });
                         return;
@@ -587,6 +620,16 @@ const HomePage = () => {
                     const email = formData.get('email') as string;
                     const password = formData.get('password') as string;
 
+                    // Validate 7-letter word format
+                    if (!/^[a-zA-Z]{7}$/.test(password)) {
+                      toast({
+                        title: "Invalid Password Format",
+                        description: "Password must be exactly 7 letters (no numbers or special characters)",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+
                     try {
                       const result = await fetch('/api/auth/email', {
                         method: 'POST',
@@ -632,7 +675,10 @@ const HomePage = () => {
                           id="password"
                           name="password"
                           type="password"
-                          placeholder="Create a password..."
+                          placeholder="Create 7-letter word password..."
+                          maxLength={7}
+                          pattern="[a-zA-Z]{7}"
+                          title="Must be exactly 7 letters"
                           required
                         />
                       </div>

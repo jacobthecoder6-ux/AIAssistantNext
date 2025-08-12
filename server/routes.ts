@@ -7,6 +7,33 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Password validation endpoint
+  app.post('/api/validate-password', async (req, res) => {
+    try {
+      const { password } = req.body;
+      
+      // Validate 7-letter word format
+      if (!/^[a-zA-Z]{7}$/.test(password)) {
+        return res.status(400).json({ error: 'Password must be exactly 7 letters' });
+      }
+      
+      // You can add your list of valid 7-letter words here
+      const validPasswords = [
+        'welcome', 'freedom', 'journey', 'success', 'friends', 'healthy', 'science',
+        'harmony', 'balance', 'amazing', 'awesome', 'perfect', 'winners', 'victory'
+      ];
+      
+      if (validPasswords.includes(password.toLowerCase())) {
+        res.json({ valid: true });
+      } else {
+        res.status(401).json({ error: 'Invalid password' });
+      }
+    } catch (error) {
+      console.error('Password validation error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
   // Chat endpoint
   app.post('/api/chat', async (req, res) => {
     try {
