@@ -12,15 +12,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { password } = req.body;
 
-      // Validate 7-letter format with only letters
+      // Validate 7-letter format with only letters (uppercase and lowercase allowed)
       if (!/^[a-zA-Z]{7}$/.test(password)) {
-        return res.status(400).json({ error: 'Password must be exactly 7 letters only' });
+        return res.status(400).json({ error: 'Password must be exactly 7 letters (uppercase and lowercase allowed)' });
       }
 
-      // You can add your list of valid 7-letter passwords here (letters only)
+      // You can add your list of valid 7-letter passwords here (letters only, case-insensitive)
       const validPasswords = [
         'adminon', 'userdef', 'passwrd', 'coderun', 'testkey', 'helloww', 'worldly',
-        'superab', 'magical', 'powerful', 'smartly', 'quickly', 'bestkey', 'coolapp'
+        'superab', 'magical', 'powerful', 'smartly', 'quickly', 'bestkey', 'coolapp',
+        'TestApp', 'ChatBot', 'UnLocks', 'AiPower', 'KeyBoard', 'Example'
       ];
 
       if (validPasswords.includes(password.toLowerCase())) {
@@ -788,9 +789,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/validate-password', async (req, res) => {
     const password = req.body.password;
 
-    // Validate 7-character password format with only letters
+    // Validate 7-character password format with only letters (uppercase and lowercase allowed)
     if (!/^[a-zA-Z]{7}$/.test(password)) {
-      return res.status(400).json({ error: 'Password must be exactly 7 letters only' });
+      return res.status(400).json({ error: 'Password must be exactly 7 letters (uppercase and lowercase allowed)' });
     }
 
     // List of valid 7-letter passwords

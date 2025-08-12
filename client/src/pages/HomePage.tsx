@@ -215,11 +215,11 @@ const HomePage = () => {
                   <DialogFooter>
                     <DialogClose asChild>
                       <Button type="submit" onClick={async () => {
-                        // Validate 7-character password format with only letters
+                        // Validate 7-character password format with only letters (uppercase and lowercase allowed)
                         if (!/^[a-zA-Z]{7}$/.test(password)) {
                           toast({
                             title: "Invalid Password Format", 
-                            description: "Password must be exactly 7 letters only",
+                            description: "Password must be exactly 7 letters (uppercase and lowercase allowed)",
                             variant: "destructive",
                           });
                           return;
@@ -686,7 +686,7 @@ const HomePage = () => {
                           placeholder="Create 7-letter password..."
                           maxLength={7}
                           pattern="^[a-zA-Z]{7}$"
-                          title="Must be exactly 7 letters only"
+                          title="Must be exactly 7 letters (uppercase and lowercase allowed)"
                           required
                         />
                       </div>
