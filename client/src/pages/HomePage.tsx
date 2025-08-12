@@ -40,6 +40,7 @@ const HomePage = () => {
   const [email, setEmail] = useState('');
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [isSignedIn, setIsSignedIn] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Check auth state on mount
   useEffect(() => {
@@ -187,6 +188,22 @@ const HomePage = () => {
     }
   }, []);
 
+  // Sign out functionality
+  const handleSignOut = () => {
+    localStorage.removeItem('auth-password');
+    localStorage.removeItem('auth-email');
+    localStorage.removeItem('is-unlocked');
+    localStorage.removeItem('premium-account');
+    setIsSignedIn(false);
+    setIsUnlocked(false);
+    setPassword('');
+    setEmail('');
+    toast({
+      title: "Signed Out",
+      description: "You have been successfully signed out.",
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex flex-col">
       {/* Navigation Bar */}
@@ -201,14 +218,58 @@ const HomePage = () => {
 
           <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
             <div className="w-full flex-1 md:w-auto md:flex-none">
+              {/* User Profile Dropdown - Only for Premium Users */}
+              {isSignedIn && localStorage.getItem('premium-account') === 'true' && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 rounded-full mr-2">
+                      <div className="h-6 w-6 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold">
+                        {email ? email.charAt(0).toUpperCase() : 'U'}
+                      </div>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-64">
+                    <DropdownMenuLabel>Premium Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <div className="px-2 py-2 space-y-2">
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Email</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{email}</p>
+                      </div>
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Password</p>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="h-6 px-2 text-xs"
+                          >
+                            {showPassword ? 'Hide' : 'Show'}
+                          </Button>
+                        </div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 font-mono">
+                          {showPassword ? password : '•'.repeat(password.length)}
+                        </p>
+                      </div>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut} className="text-red-600 dark:text-red-400">
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+
               {/* Password Dialog */}
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="mr-2">
-                    <Key className="h-4 w-4 mr-2" />
-                    {isUnlocked ? 'Unlocked' : 'Unlock Features'}
-                  </Button>
-                </DialogTrigger>
+              {!isSignedIn && (
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="mr-2">
+                      <Key className="h-4 w-4 mr-2" />
+                      {isUnlocked ? 'Unlocked' : 'Unlock Features'}
+                    </Button>
+                  </DialogTrigger>
                 <DialogContent className="sm:max-w-[425px]">
                   <DialogHeader>
                     <DialogTitle>Create Premium Account</DialogTitle>
@@ -308,6 +369,112 @@ const HomePage = () => {
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
+              )}
+
+              {/* Show unlock button for signed in users who aren't premium yet */}
+              {isSignedIn && localStorage.getItem('premium-account') !== 'true' && (
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="mr-2">
+                      <Key className="h-4 w-4 mr-2" />
+                      Upgrade to Premium
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Upgrade to Premium</DialogTitle>
+                      <DialogDescription>
+                        Create a premium account to get unlimited access to AI features without requiring API keys.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="upgrade-email">Email Address</Label>
+                        <Input
+                          id="upgrade-email"
+                          type="email"
+                          placeholder="Enter your email..."
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="upgrade-password">Password</Label>
+                        <Input
+                          id="upgrade-password"
+                          type="password"
+                          placeholder="Create 7-letter password..."
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          maxLength={7}
+                          title="Must be exactly 7 letters (uppercase and lowercase allowed)"
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <DialogClose asChild>
+                        <Button type="submit" onClick={async () => {
+                          // Validate email
+                          if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                            toast({
+                              title: "Invalid Email Format", 
+                              description: "Please enter a valid email address",
+                              variant: "destructive",
+                            });
+                            return;
+                          }
+
+                          // Validate 7-character password format with only letters (uppercase and lowercase allowed)
+                          if (!/^[a-zA-Z]{7}$/.test(password)) {
+                            toast({
+                              title: "Invalid Password Format", 
+                              description: "Password must be exactly 7 letters (uppercase and lowercase allowed)",
+                              variant: "destructive",
+                            });
+                            return;
+                          }
+
+                          try {
+                            const response = await fetch('/api/create-premium-account', {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                              },
+                              body: JSON.stringify({ email, password }),
+                            });
+
+                            if (response.ok) {
+                              setIsUnlocked(true);
+                              localStorage.setItem('is-unlocked', 'true');
+                              localStorage.setItem('auth-email', email);
+                              localStorage.setItem('auth-password', password);
+                              localStorage.setItem('premium-account', 'true');
+                              toast({
+                                title: "Premium Account Created",
+                                description: "Welcome! You now have premium access."
+                              });
+                            } else {
+                              const data = await response.json();
+                              toast({
+                                title: "Error",
+                                description: data.error || "Failed to create premium account",
+                                variant: "destructive",
+                              });
+                            }
+                          } catch (error) {
+                            toast({
+                              title: "Error",
+                              description: "Failed to create premium account",
+                              variant: "destructive",
+                            });
+                          }
+                        }}>Upgrade to Premium</Button>
+                      </DialogClose>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              )}
 
               {/* Theme Selector */}
               <DropdownMenu>
