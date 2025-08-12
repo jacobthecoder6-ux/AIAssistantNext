@@ -40,15 +40,16 @@ const HomePage = () => {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [isSignedIn, setIsSignedIn] = useState(false);
 
-  // Clear auth state and check if user is already signed in
+  // Check auth state on mount
   useEffect(() => {
-    // Clear all auth-related items
-    localStorage.removeItem('auth-password');
-    localStorage.removeItem('auth-email');
-    localStorage.removeItem('is-unlocked');
-    setIsSignedIn(false);
-    setPassword('');
-    setIsUnlocked(false);
+    const savedPassword = localStorage.getItem('auth-password');
+    const isUnlockedStored = localStorage.getItem('is-unlocked');
+    
+    if (savedPassword && isUnlockedStored === 'true') {
+      setIsSignedIn(true);
+      setPassword(savedPassword);
+      setIsUnlocked(true);
+    }
   }, []);
   const [openaiApiKey, setOpenaiApiKey] = useState('');
   const [anthropicApiKey, setAnthropicApiKey] = useState('');
@@ -235,11 +236,17 @@ const HomePage = () => {
 
                           if (response.ok) {
                             setIsUnlocked(true);
+                            setIsSignedIn(true);
                             localStorage.setItem('is-unlocked', 'true');
+                            localStorage.setItem('auth-password', password);
                             toast({
-                              title: "Features Unlocked",
-                              description: "You now have access to all features."
+                              title: "Welcome to Unlocked AI!",
+                              description: "You now have access to all features. Start chatting!"
                             });
+                            // Auto-navigate to chat after a short delay
+                            setTimeout(() => {
+                              setLocation('/chat');
+                            }, 1500);
                           } else {
                             toast({
                               title: "Error",
@@ -529,7 +536,7 @@ const HomePage = () => {
               size="lg" 
               className="group px-8 py-6 text-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
             >
-              Start Chatting Now
+              {isUnlocked ? 'Enter Unlocked AI' : 'Start Chatting Now'}
               <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Button>
 
