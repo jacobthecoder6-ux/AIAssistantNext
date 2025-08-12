@@ -75,7 +75,11 @@ export interface IStorage {
 
 // Database storage implementation
 export class DatabaseStorage implements IStorage {
-  private userPasswordsFile = path.join(__dirname, 'user-passwords.json'); // Define the path for user passwords
+  private userPasswordsFile: string;
+
+  constructor() {
+    this.userPasswordsFile = path.join(__dirname, 'user-passwords.json');
+  }
 
   // User operations
   async getUser(id: number): Promise<User | undefined> {
