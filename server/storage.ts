@@ -40,6 +40,121 @@ export interface Chat {
   isArchived?: boolean;
 }
 
+// In-memory storage implementation for quick prototyping
+export class MemStorage implements IStorage {
+  private chats: Map<string, Chat> = new Map();
+  private users: Map<number, User> = new Map();
+  private userPasswords: Map<string, string> = new Map();
+  private premiumAccounts: Set<string> = new Set();
+  
+  // User operations
+  async getUser(id: number): Promise<User | undefined> {
+    return this.users.get(id);
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    for (const [, user] of this.users) {
+      if (user.username === username) {
+        return user;
+      }
+    }
+    return undefined;
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const id = Math.floor(Math.random() * 1000000);
+    const newUser: User = {
+      id,
+      username: user.username,
+      password: user.password,
+      unlocked: user.unlocked ?? false,
+      preferredLanguage: user.preferredLanguage ?? null,
+      preferredModel: user.preferredModel ?? null,
+      preferredTheme: user.preferredTheme ?? null,
+      createdAt: new Date(),
+      lastLogin: new Date()
+    };
+    this.users.set(id, newUser);
+    return newUser;
+  }
+
+  // Chat operations
+  async createChat(title: string, userId?: number, aiProvider?: string, aiModel?: string): Promise<string> {
+    const id = uuidv4();
+    const chat: Chat = {
+      id,
+      title,
+      messages: [],
+      timestamp: new Date(),
+      userId,
+      aiProvider,
+      aiModel,
+      isArchived: false
+    };
+    this.chats.set(id, chat);
+    return id;
+  }
+
+  async getChatById(id: string): Promise<Chat | undefined> {
+    return this.chats.get(id);
+  }
+
+  async getAllChats(userId?: number): Promise<Chat[]> {
+    const allChats = Array.from(this.chats.values());
+    if (userId) {
+      return allChats.filter(chat => chat.userId === userId);
+    }
+    return allChats.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+  }
+
+  async addMessageToChat(chatId: string, message: Omit<Message, 'id'>): Promise<Message> {
+    const chat = this.chats.get(chatId);
+    if (!chat) {
+      throw new Error(`Chat with id ${chatId} not found`);
+    }
+    
+    const newMessage: Message = {
+      id: uuidv4(),
+      ...message
+    };
+    
+    chat.messages.push(newMessage);
+    return newMessage;
+  }
+
+  async deleteChat(id: string): Promise<void> {
+    this.chats.delete(id);
+  }
+
+  async clearAllChats(userId?: number): Promise<void> {
+    if (userId) {
+      const chatsToDelete: string[] = [];
+      for (const [id, chat] of this.chats) {
+        if (chat.userId === userId) {
+          chatsToDelete.push(id);
+        }
+      }
+      chatsToDelete.forEach(id => this.chats.delete(id));
+    } else {
+      this.chats.clear();
+    }
+  }
+
+  // Password storage
+  async storeUserPassword(email: string, password: string): Promise<void> {
+    this.userPasswords.set(email, password);
+  }
+
+  // Premium account operations
+  async markAsPremiumAccount(email: string): Promise<void> {
+    this.premiumAccounts.add(email);
+  }
+
+  async isPremiumAccount(email: string): Promise<boolean> {
+    return this.premiumAccounts.has(email);
+  }
+}
+
 // Interface for storage operations
 export interface IStorage {
   // User operations
@@ -408,5 +523,5 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Create and export an instance of the DatabaseStorage
-export const storage = new DatabaseStorage();
+// Create and export an instance of the MemStorage for now (switch to DatabaseStorage when database is ready)
+export const storage = new MemStorage();
