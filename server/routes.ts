@@ -11,18 +11,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/validate-password', async (req, res) => {
     try {
       const { password } = req.body;
-      
+
       // Validate 7-letter format with only letters
       if (!/^[a-zA-Z]{7}$/.test(password)) {
         return res.status(400).json({ error: 'Password must be exactly 7 letters only' });
       }
-      
+
       // You can add your list of valid 7-letter passwords here (letters only)
       const validPasswords = [
         'adminon', 'userdef', 'passwrd', 'coderun', 'testkey', 'helloww', 'worldly',
         'superab', 'magical', 'powerful', 'smartly', 'quickly', 'bestkey', 'coolapp'
       ];
-      
+
       if (validPasswords.includes(password.toLowerCase())) {
         res.json({ valid: true });
       } else {
@@ -734,7 +734,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/email', async (req, res) => {
     try {
       const { email, password } = req.body;
-      
+
       if (!email || !password) {
         return res.status(400).json({ error: 'Email and password are required' });
       }
@@ -753,7 +753,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/google', async (req, res) => {
     try {
       const { token, password } = req.body;
-      
+
       if (!token) {
         return res.status(400).json({ error: 'Google token is required' });
       }
@@ -765,7 +765,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Verify Google token
       const response = await fetch('https://oauth2.googleapis.com/tokeninfo?id_token=' + token);
       const data = await response.json();
-      
+
       if (!data.email) {
         return res.status(401).json({ error: 'Invalid Google token' });
       }
@@ -786,19 +786,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Add password validation endpoint
   app.post('/api/validate-password', async (req, res) => {
-    const password = req.headers.authorization?.split(' ')[1] || req.body.password;
+    const password = req.body.password;
 
-    if (!password) {
-      return res.status(400).json({ error: 'Password is required' });
+    // Validate 7-character password format with only letters
+    if (!/^[a-zA-Z]{7}$/.test(password)) {
+      return res.status(400).json({ error: 'Password must be exactly 7 letters only' });
     }
 
-    // Replace this with your actual password
-    const VALID_PASSWORD = "your-secure-password";
+    // List of valid 7-letter passwords
+    const VALID_PASSWORDS = [
+      'testapp',
+      'chatbot',
+      'unlocks',
+      'aipower',
+      'keyboard',
+      'example'
+    ];
 
-    if (password === VALID_PASSWORD) {
+    if (VALID_PASSWORDS.includes(password.toLowerCase())) {
       return res.json({ success: true });
     } else {
-      return res.status(401).json({ error: 'Invalid password' });
+      return res.status(401).json({ error: 'Invalid password - must be a valid 7-letter password' });
     }
   });
 
