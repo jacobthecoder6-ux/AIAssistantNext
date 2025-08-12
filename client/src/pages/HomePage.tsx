@@ -195,7 +195,7 @@ const HomePage = () => {
                   <DialogHeader>
                     <DialogTitle>Unlock Features</DialogTitle>
                     <DialogDescription>
-                      Enter a 7-character password with letters and numbers to unlock all features of the application.
+                      Enter a 7-character password with letters only to unlock all features of the application.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
@@ -204,7 +204,7 @@ const HomePage = () => {
                       <Input
                         id="password"
                         type="password"
-                        placeholder="Enter 7-character password..."
+                        placeholder="Enter 7-letter password..."
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         maxLength={7}
@@ -214,22 +214,12 @@ const HomePage = () => {
                   <DialogFooter>
                     <DialogClose asChild>
                       <Button type="submit" onClick={async () => {
-                        // Validate 7-character password format with letters and numbers
-                        if (!/^[a-zA-Z0-9]{7}$/.test(password)) {
+                        // Validate 7-character password format with only letters
+                        if (!/^[a-zA-Z]{7}$/.test(password)) {
                           toast({
-                            title: "Invalid Password Format",
-                            description: "Password must be exactly 7 characters with letters and numbers",
-                            variant: "destructive"
-                          });
-                          return;
-                        }
-
-                        // Check that password contains both letters and numbers
-                        if (!/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
-                          toast({
-                            title: "Invalid Password Format",
-                            description: "Password must contain both letters and numbers",
-                            variant: "destructive"
+                            title: "Invalid Password Format", 
+                            description: "Password must be exactly 7 letters only",
+                            variant: "destructive",
                           });
                           return;
                         }
@@ -253,15 +243,15 @@ const HomePage = () => {
                           } else {
                             toast({
                               title: "Error",
-                              description: "Invalid password - must be a valid 7-character password",
-                              variant: "destructive"
+                              description: "Invalid password - must be a valid 7-letter password",
+                              variant: "destructive",
                             });
                           }
                         } catch (error) {
                           toast({
                             title: "Error",
                             description: "Failed to validate password",
-                            variant: "destructive"
+                            variant: "destructive",
                           });
                         }
                       }}>Unlock</Button>
@@ -560,20 +550,11 @@ const HomePage = () => {
                         return;
                       }
 
-                      if (!/^[a-zA-Z0-9]{7}$/.test(password)) {
+                      // Validate 7-character password format with only letters
+                      if (!/^[a-zA-Z]{7}$/.test(password)) {
                         toast({
                           title: "Invalid Password Format",
-                          description: "Password must be exactly 7 characters with letters and numbers",
-                          variant: "destructive",
-                        });
-                        return;
-                      }
-
-                      // Check that password contains both letters and numbers
-                      if (!/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
-                        toast({
-                          title: "Invalid Password Format",
-                          description: "Password must contain both letters and numbers",
+                          description: "Password must be exactly 7 letters only",
                           variant: "destructive",
                         });
                         return;
@@ -640,21 +621,11 @@ const HomePage = () => {
                     const email = formData.get('email') as string;
                     const password = formData.get('password') as string;
 
-                    // Validate 7-character password format
-                    if (!/^[a-zA-Z0-9]{7}$/.test(password)) {
+                    // Validate 7-character password format with only letters
+                    if (!/^[a-zA-Z]{7}$/.test(password)) {
                       toast({
-                        title: "Invalid Password Format",
-                        description: "Password must be exactly 7 characters with letters and numbers",
-                        variant: "destructive",
-                      });
-                      return;
-                    }
-
-                    // Check that password contains both letters and numbers
-                    if (!/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
-                      toast({
-                        title: "Invalid Password Format",
-                        description: "Password must contain both letters and numbers",
+                        title: "Invalid Password Format", 
+                        description: "Password must be exactly 7 letters only",
                         variant: "destructive",
                       });
                       return;
@@ -705,10 +676,10 @@ const HomePage = () => {
                           id="password"
                           name="password"
                           type="password"
-                          placeholder="Create 7-character password..."
+                          placeholder="Create 7-letter password..."
                           maxLength={7}
-                          pattern="^(?=.*[a-zA-Z])(?=.*[0-9])[a-zA-Z0-9]{7}$"
-                          title="Must be exactly 7 characters with both letters and numbers"
+                          pattern="^[a-zA-Z]{7}$"
+                          title="Must be exactly 7 letters only"
                           required
                         />
                       </div>
